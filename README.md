@@ -74,7 +74,7 @@ On an x86_64 Linux build machine, install Docker, Python 3.10+, Node.js 22.13+, 
 ./scripts/build_appimage.sh
 ```
 
-Builds currently run locally. The same command can later run in GitHub Actions. It builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.4`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
+The same command builds locally and in GitHub Actions on the project's self-hosted runner. Pushing a reviewed version tag builds and publishes the AppImage and corresponding sources; see [the release procedure](docs/RELEASING.md). The script builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.4`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
 
 See [build details](docs/APPIMAGE.md) and [contribution/testing instructions](CONTRIBUTING.md).
 

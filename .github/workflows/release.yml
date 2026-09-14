@@ -1,0 +1,100 @@
+name: Release AppImage
+on:
+  push:
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+permissions:
+  contents: read
+concurrency:
+  group: tuxcue-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on:
+      group: Default
+      labels: [self-hosted, linux, x64, tuxcue, appimage]
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate release tag
+        id: version
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from soundboard import __version__
+          tag = os.environ['GITHUB_REF_NAME']
+          if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag) or tag != f'v{__version__}':
+              raise SystemExit('Release tag must be vMAJOR.MINOR.PATCH and match the application version.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'version={__version__}\n')
+          PY
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          python3 scripts/check_release.py
+          printf 'TUXCUE_OUTPUT_DIR=%s/tuxcue-release-%s-%s\n' \
+            "$RUNNER_TEMP" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 gh jq
+          npm install --global pnpm@11.19.0
+          docker info > /dev/null
+      - name: Build and check AppImage and corresponding sources
+        run: ./scripts/build_appimage.sh
+      - name: Verify release files
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd "$TUXCUE_OUTPUT_DIR"
+          test -s "TuxCue-$VERSION-x86_64.AppImage"
+          test -s "TuxCue-$VERSION-source.tar.gz"
+          test -s "TuxCue-$VERSION-third-party-sources.tar.xz"
+          test -s COMPONENTS.json
+          test -s SHA256SUMS
+          sha256sum -c SHA256SUMS
+      - name: Upload assets and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          endpoint="repos/$GH_REPO/releases"
+          # Only unfinished drafts may be retried; never overwrite a published release.
+          releases=$(gh api --paginate "$endpoint?per_page=100")
+          release=$(jq --arg tag "$GITHUB_REF_NAME" '.[] | select(.tag_name == $tag)' <<< "$releases")
+          if [ -n "$release" ]; then
+            test "$(jq -r '.draft' <<< "$release")" = true || {
+              echo 'This release is already published; create a new version instead.' >&2
+              exit 1
+            }
+          else
+            printf '%s\n' \
+              "TuxCue $VERSION for x86_64 Linux." \
+              '' \
+              'Download the AppImage to run TuxCue. No audio files are included; add your own sounds.' \
+              '' \
+              'Both corresponding-source archives, component metadata, and SHA256 checksums are attached.' \
+              > "$RUNNER_TEMP/tuxcue-release-notes.md"
+            release=$(gh api --method POST "$endpoint" \
+              -f tag_name="$GITHUB_REF_NAME" -f name="TuxCue $VERSION" \
+              -f body="$(cat "$RUNNER_TEMP/tuxcue-release-notes.md")" -F draft=true)
+          fi
+          gh release upload "$GITHUB_REF_NAME" --clobber \
+            "$TUXCUE_OUTPUT_DIR/TuxCue-$VERSION-x86_64.AppImage" \
+            "$TUXCUE_OUTPUT_DIR/TuxCue-$VERSION-source.tar.gz" \
+            "$TUXCUE_OUTPUT_DIR/TuxCue-$VERSION-third-party-sources.tar.xz" \
+            "$TUXCUE_OUTPUT_DIR/COMPONENTS.json" \
+            "$TUXCUE_OUTPUT_DIR/SHA256SUMS"
+          release_id=$(jq -r '.id' <<< "$release")
+          gh api --method PATCH "$endpoint/$release_id" -F draft=false --silent

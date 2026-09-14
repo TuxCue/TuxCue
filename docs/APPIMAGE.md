@@ -55,7 +55,7 @@ TUXCUE_OUTPUT_DIR="$HOME/TuxCue-builds/0.4.4" ./scripts/build_appimage.sh
 
 The folder must be outside the source checkout. Docker retains its normal build cache, and pnpm uses its external package store. Temporary build files are removed when the script exits. `packaging/AppRun` is the internal AppImage entry point, not a separate user launcher.
 
-For a future GitHub Actions packaging job, install the same prerequisites and invoke this script with `TUXCUE_OUTPUT_DIR="$RUNNER_TEMP/tuxcue-release"`, then collect files from that folder as workflow artifacts. The current workflow only checks source and browser builds; it does not build or publish releases.
+GitHub Actions uses the same build script when a maintainer pushes a version tag such as `v0.4.4`. The release workflow uses the `Default` self-hosted runner group and requires all labels `self-hosted`, `linux`, `x64`, `tuxcue`, and `appimage`. The runner needs Docker access and an Ubuntu/Debian environment with Python 3, sudo, and apt; the workflow installs Node.js, pnpm, and the GitHub CLI. Build output stays in the runner's temporary directory. All five release assets upload to a draft before it is published. See [RELEASING.md](RELEASING.md) for the tag procedure and retry behavior.
 
 The Ubuntu image is pinned by digest; Python/npm dependencies and downloaded packaging tools have recorded versions and hashes. Ubuntu packages still resolve from signed repository metadata at build time. Their actual binary/source versions are recorded, so byte-identical rebuilds are **not** claimed. A changed upstream runtime download fails its pinned hash check rather than silently changing the runtime.
 
