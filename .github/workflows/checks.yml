@@ -1,0 +1,40 @@
+name: Checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  source:
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - name: Install native test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv python3-gi python3-cairo python3-xlib gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-pulseaudio ffmpeg pulseaudio-utils
+      - name: Install pinned Python dependencies
+        run: |
+          python3 -m venv --system-site-packages "$RUNNER_TEMP/test-venv"
+          "$RUNNER_TEMP/test-venv/bin/python" -m pip install --upgrade --no-deps --require-hashes -r requirements-build.lock
+          "$RUNNER_TEMP/test-venv/bin/python" -m pip install --ignore-installed --require-hashes -r requirements.lock
+      - name: Test source and release boundaries
+        run: |
+          "$RUNNER_TEMP/test-venv/bin/python" -m unittest discover -s tests -v
+          python3 scripts/check_release.py
+      - name: Build browser interfaces and collect notices
+        run: |
+          npm install --global pnpm@11.19.0
+          python3 scripts/source_archive.py "$RUNNER_TEMP/tuxcue-source"
+          mkdir "$RUNNER_TEMP/tuxcue-frontend"
+          tar -xzf "$RUNNER_TEMP"/tuxcue-source/TuxCue-*-source.tar.gz -C "$RUNNER_TEMP/tuxcue-frontend" --strip-components=1
+          cd "$RUNNER_TEMP/tuxcue-frontend/frontend"
+          pnpm install --frozen-lockfile
+          pnpm run build
+          python3 ../scripts/frontend_notices.py

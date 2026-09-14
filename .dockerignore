@@ -1,0 +1,14 @@
+**
+!packaging/
+!packaging/**
+!soundboard/
+!soundboard/*.py
+!requirements.lock
+!requirements-build.lock
+!LICENSE
+!THIRD_PARTY_NOTICES.md
+!frontend/
+!frontend/dist/
+!frontend/dist/**
+!tests/
+!tests/*.py

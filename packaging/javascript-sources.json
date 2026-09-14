@@ -1,0 +1,12 @@
+{
+  "react": {
+    "revision": "1d34f91dfde6bba84d08b683aaba164c7194dacb",
+    "url": "https://codeload.github.com/react/react/tar.gz/1d34f91dfde6bba84d08b683aaba164c7194dacb",
+    "sha256": "ef34c2ad2fe4af769cdc8a067d827fbba8fde677d83f5befaa8a8cc5c3a8c6be"
+  },
+  "lucide": {
+    "revision": "f12b0de177fbc2a6795e99be065887e72b237123",
+    "url": "https://codeload.github.com/lucide-icons/lucide/tar.gz/f12b0de177fbc2a6795e99be065887e72b237123",
+    "sha256": "8d413d4a7caf8827a6f72da0f05aa1103a7179399820ac893758801c2b730af5"
+  }
+}

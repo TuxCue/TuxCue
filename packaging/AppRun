@@ -1,0 +1,3 @@
+#!/bin/sh
+TUXCUE_APPDIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$TUXCUE_APPDIR/usr/bin/tuxcue" "$@"
