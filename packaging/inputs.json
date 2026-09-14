@@ -1,0 +1,37 @@
+{
+  "ffmpeg": {
+    "version": "8.1.2",
+    "url": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+    "sha256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c"
+  },
+  "appimagetool": {
+    "version": "1.9.1",
+    "url": "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage",
+    "sha256": "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
+  },
+  "runtime": {
+    "version": "75849dce7cc37e4319b633df1f116ca895c71a12",
+    "url": "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64",
+    "sha256": "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf"
+  },
+  "runtime-libfuse": {
+    "version": "3.15.0",
+    "url": "https://github.com/libfuse/libfuse/releases/download/fuse-3.15.0/fuse-3.15.0.tar.xz",
+    "sha256": "70589cfd5e1cff7ccd6ac91c86c01be340b227285c5e200baa284e401eea2ca0"
+  },
+  "runtime-squashfuse": {
+    "version": "0.5.2",
+    "url": "https://github.com/vasi/squashfuse/archive/0.5.2.tar.gz",
+    "sha256": "db0238c5981dabbd80ee09ae15387f390091668ca060a7bc38047912491443d3"
+  },
+  "runtime-source": {
+    "version": "75849dce7cc37e4319b633df1f116ca895c71a12",
+    "url": "https://codeload.github.com/AppImage/type2-runtime/tar.gz/75849dce7cc37e4319b633df1f116ca895c71a12",
+    "sha256": "b7af4960da4b90364e935a3281d04fad6560da4813c012414fa2f738291ad443"
+  },
+  "appimagetool-source": {
+    "version": "8c8c91f762b412a19f4e8d2c4b35afb98f2d7c81",
+    "url": "https://codeload.github.com/AppImage/appimagetool/tar.gz/8c8c91f762b412a19f4e8d2c4b35afb98f2d7c81",
+    "sha256": "ea8f1e90fb14730a9d64ea2d8bd1ae21c22b595f613ee4383338535781984ba8"
+  }
+}
