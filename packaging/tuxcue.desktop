@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=TuxCue
+GenericName=Soundboard
+Comment=Play sound clips in voice chat
+Exec=tuxcue
+Icon=tuxcue
+Categories=AudioVideo;Audio;
+Terminal=false
+StartupNotify=false
