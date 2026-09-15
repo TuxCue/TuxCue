@@ -64,6 +64,8 @@ There is no cloud account or built-in telemetry. Phone control is off by default
 
 Users are responsible for ensuring they have the necessary rights to any audio or other content they import into TuxCue. Exported sets contain their assigned audio, so share them accordingly.
 
+Set ZIPs keep readable audio filenames inside `audio/` and preserve the original file bytes and formats when available. Duplicate names receive a numbered suffix; older sounds with only a playback WAV remaining export as readable WAV files. Import restores the set layout and audio. Updated TuxCue can import older hashed-WAV set bundles, but older app versions cannot import the new bundle format.
+
 ## Build the AppImage
 
 The repository contains application source, tests, documentation, and build recipes. Users launch the resulting AppImage directly; no startup script or source installation is required.

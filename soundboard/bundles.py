@@ -10,7 +10,7 @@ import uuid
 import zipfile
 
 from .boards import validate_profile
-from .library import Library, atomic_json, MAX_SECONDS
+from .library import Library, atomic_json, readable_filename, EXTENSIONS, MAX_SECONDS
 
 MAX_UNPACKED = 512 * 1024 * 1024
 
@@ -21,17 +21,35 @@ def export_set(boards, library, profile_id, output):
     available = {s['id']:s for s in library.list()}
     profile['tiles'] = [t if t and t['sound_id'] in available else None for t in profile['tiles']]
     ids = {t['sound_id'] for t in profile['tiles'] if t}
-    if sum(library.path(i).stat().st_size for i in ids) > MAX_UNPACKED:
-        raise ValueError('This set exceeds the 512 MB audio bundle limit. Split it into smaller sets.')
-    sounds = [{**available[i], 'file':f'audio/{i}.wav'} for i in sorted(ids)]
-    manifest = {'format':'soundboard-set','version':1,'profile':profile,'sounds':sounds}
+    sounds, sources, filenames = [], {}, set()
+    for sound_id in sorted(ids):
+        item = available[sound_id]
+        source = library._collection_path(item['stored_file']) if item.get('stored_file') else None
+        if source is None or not source.is_file():
+            source = library.path(sound_id)
+        filename = readable_filename(item.get('filename') or item['name'] + source.suffix)
+        # Legacy imports may only retain WAV playback audio, despite an MP3 filename.
+        if Path(filename).suffix.lower() != source.suffix.lower():
+            filename = str(Path(filename).with_suffix(source.suffix))
+        base = Path(filename)
+        number = 2
+        while filename.casefold() in filenames:
+            stem, suffix = base.stem, f' ({number}){base.suffix}'
+            while len((stem + suffix).encode('utf-8')) > 220:
+                stem = stem[:-1]
+            filename = stem + suffix
+            number += 1
+        filenames.add(filename.casefold())
+        sources[sound_id] = source
+        sounds.append({**item, 'filename':filename, 'file':f'audio/{filename}'})
+    manifest = {'format':'soundboard-set','version':2,'profile':profile,'sounds':sounds}
     manifest_bytes = json.dumps(manifest, ensure_ascii=False).encode('utf-8')
-    if sum(library.path(i).stat().st_size for i in ids) + len(manifest_bytes) > MAX_UNPACKED:
+    if sum(source.stat().st_size for source in sources.values()) + len(manifest_bytes) > MAX_UNPACKED:
         raise ValueError('This set exceeds the 512 MB bundle limit. Split it into smaller sets.')
     with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('manifest.json', manifest_bytes)
         for sound in sounds:
-            archive.write(library.path(sound['id']), sound['file'])
+            archive.write(sources[sound['id']], sound['file'])
 
 
 def import_set(boards, library, archive_path):
@@ -45,21 +63,32 @@ def import_set(boards, library, archive_path):
             if info.file_size > 2 * 1024 * 1024:
                 raise ValueError('The bundle manifest is too large.')
             manifest = json.loads(archive.read('manifest.json'))
-            if manifest.get('format') != 'soundboard-set' or manifest.get('version') != 1:
+            version = manifest.get('version')
+            if manifest.get('format') != 'soundboard-set' or version not in (1, 2):
                 raise ValueError('Choose a Soundboard set bundle exported by this app.')
             profile = validate_profile(deepcopy(manifest['profile']))
             sounds = manifest['sounds']
             if not isinstance(sounds, list) or len(sounds) > 1000:
                 raise ValueError('Invalid bundle sound list.')
-            by_id = {}
+            by_id, audio_names = {}, set()
             for item in sounds:
                 sound_id = item.get('id')
                 if not isinstance(sound_id,str) or not re.fullmatch('[a-f0-9]{24}',sound_id) or sound_id in by_id:
                     raise ValueError('Invalid or duplicate sound identifiers in the bundle.')
                 if not isinstance(item.get('name'),str) or not 1 <= len(item['name'].strip()) <= 120:
                     raise ValueError('Invalid sound name in the bundle.')
-                if item.get('file') != f'audio/{sound_id}.wav':
-                    raise ValueError('Invalid audio path in the bundle.')
+                audio_file = item.get('file')
+                if version == 1:
+                    if audio_file != f'audio/{sound_id}.wav':
+                        raise ValueError('Invalid audio path in the bundle.')
+                else:
+                    if not isinstance(audio_file, str) or not audio_file.startswith('audio/'):
+                        raise ValueError('Invalid audio path in the bundle.')
+                    filename = audio_file[len('audio/'):]
+                    if (readable_filename(filename) != filename or Path(filename).suffix.lower() not in EXTENSIONS
+                            or audio_file.casefold() in audio_names):
+                        raise ValueError('Invalid or duplicate audio path in the bundle.')
+                audio_names.add(audio_file.casefold())
                 if not isinstance(item.get('filename', 'audio.wav'), str):
                     raise ValueError('Invalid audio filename in the bundle.')
                 by_id[sound_id] = item
@@ -72,13 +101,15 @@ def import_set(boards, library, archive_path):
             staging = Library(Path(temp)/'library', Path(temp)/'samples')
             prepared = []
             for old_id, item in by_id.items():
-                original = Path(temp)/'incoming.wav'
+                filename = Path(item['file']).name
+                original = Path(temp)/('incoming' + Path(filename).suffix)
                 with archive.open(item['file']) as src, original.open('wb') as dst:
                     shutil.copyfileobj(src,dst,1024*1024)
-                checked = staging.import_file(original, 'incoming.wav', max_bytes=MAX_SECONDS*48000*4+65536)
-                prepared.append((old_id,item,checked,staging.path(checked['id'])))
+                checked = staging.import_file(original, filename, max_bytes=MAX_SECONDS*48000*4+65536)
+                prepared.append((old_id,item,checked,staging.path(checked['id']),
+                                 staging._collection_path(checked['stored_file'])))
             remap = {}
-            for old_id,item,checked,path in prepared:
+            for old_id,item,checked,path,original in prepared:
                 final_id = old_id
                 old_path = library._pcm_path(library.items[old_id]) if old_id in library.items else None
                 if old_path and old_path.exists() and hashlib.sha256(old_path.read_bytes()).digest() != hashlib.sha256(path.read_bytes()).digest():
@@ -98,13 +129,14 @@ def import_set(boards, library, archive_path):
             if any(t and t['shortcut'] and t['shortcut'] == snapshot['stop_shortcut'] for t in profile['tiles']):
                 raise ValueError('An imported tile uses the current Stop all shortcut. Change Stop all first.')
             with library.lock:
-                for old_id,item,checked,path in prepared:
+                for old_id,item,checked,path,original in prepared:
                     final_id = remap[old_id]
                     if final_id not in library.items or not library._pcm_path(library.items[final_id]).is_file():
-                        filename = Path(item.get('filename','audio.wav')).name
+                        filename = (Path(item['file']).name if version == 2
+                                    else Path(item.get('filename','audio.wav')).stem + '.wav')
                         library.store_audio({'id':final_id,'name':item['name'].strip(),
                                              'filename':filename,'duration':checked['duration']},
-                                            path, path, Path(filename).stem + '.wav')
+                                            original, path, filename)
                     else:
                         library.items[final_id]['trashed'] = False
                 atomic_json(library.index,library.items)

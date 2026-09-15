@@ -4,6 +4,7 @@ from copy import deepcopy
 import hashlib
 import io
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 import threading
@@ -174,6 +175,86 @@ class ManagementTests(unittest.TestCase):
         self.assertEqual(result.status_code,200,result.text)
         self.assertEqual(self.boards.active()['id'],result.json()['id'])
 
+    def test_bundle_preserves_original_mp3_filename_and_bytes(self):
+        source = self.root/'Victory tune.mp3'
+        subprocess.run(['ffmpeg','-v','error','-i',str(self.library.path(self.id)),str(source)],check=True)
+        sound = self.library.import_file(source,source.name)
+        self.boards.add(sound['id'])
+        bundle = self.root/'originals.zip'
+        export_set(self.boards,self.library,self.profile['id'],bundle)
+        with zipfile.ZipFile(bundle) as archive:
+            manifest = json.loads(archive.read('manifest.json'))
+            self.assertEqual(manifest['version'],2)
+            self.assertEqual(set(archive.namelist()),{'manifest.json','audio/sample.wav','audio/Victory tune.mp3'})
+            self.assertEqual(archive.read('audio/Victory tune.mp3'),source.read_bytes())
+        other_lib = Library(self.root/'other-library',self.root/'empty-samples')
+        other_boards = Boards(self.root/'other-sets.json',other_lib)
+        import_set(other_boards,other_lib,bundle)
+        imported = other_lib.get(sound['id'])
+        self.assertEqual(imported['stored_file'],source.name)
+        self.assertEqual((other_lib.directory/imported['stored_file']).read_bytes(),source.read_bytes())
+        second = self.root/'reexport.zip'
+        export_set(other_boards,other_lib,other_boards.active()['id'],second)
+        with zipfile.ZipFile(second) as archive:
+            self.assertEqual(archive.read('audio/Victory tune.mp3'),source.read_bytes())
+
+    def test_bundle_readable_collisions_and_wav_fallback(self):
+        second = self.library.save_selection(self.id,'Another sound',start=0,end=.05)
+        self.boards.add(second['id'])
+        for filename in ('sample.wav','x'*216+'.wav'):
+            self.library.items[self.id]['filename'] = filename
+            self.library.items[second['id']]['filename'] = filename
+            bundle = self.root/'collisions.zip'
+            export_set(self.boards,self.library,self.profile['id'],bundle)
+            with zipfile.ZipFile(bundle) as archive:
+                audio = [n for n in archive.namelist() if n.startswith('audio/')]
+                self.assertEqual(len(audio),2)
+                self.assertEqual(len(set(n.casefold() for n in audio)),2)
+                self.assertIn('audio/'+filename,audio)
+                self.assertTrue(any(n.endswith(' (2).wav') for n in audio))
+                self.assertTrue(all(len(Path(n).name.encode())<=220 for n in audio))
+        self.library.items[self.id]['filename'] = 'Original song.mp3'
+        (self.library.directory/self.sound['stored_file']).unlink()
+        bundle = self.root/'fallback.zip'
+        export_set(self.boards,self.library,self.profile['id'],bundle)
+        with zipfile.ZipFile(bundle) as archive:
+            self.assertEqual(archive.read('audio/Original song.wav'),self.library.path(self.id).read_bytes())
+
+    def test_legacy_hashed_wav_bundle_still_imports(self):
+        manifest = {'format':'soundboard-set','version':1,'profile':self.profile,
+                    'sounds':[{**self.sound,'filename':'Old original.mp3','file':f'audio/{self.id}.wav'}]}
+        bundle = self.root/'legacy.zip'
+        with zipfile.ZipFile(bundle,'w') as archive:
+            archive.writestr('manifest.json',json.dumps(manifest))
+            archive.write(self.library.path(self.id),f'audio/{self.id}.wav')
+        other_lib = Library(self.root/'legacy-library',self.root/'empty-samples')
+        other_boards = Boards(self.root/'legacy-sets.json',other_lib)
+        imported = import_set(other_boards,other_lib,bundle)
+        self.assertEqual(imported['tiles'][0]['sound_id'],self.id)
+        self.assertEqual(other_lib.get(self.id)['stored_file'],'Old original.wav')
+        self.assertTrue(other_lib.path(self.id).is_file())
+
+    def test_bundle_rejects_unsafe_or_shared_named_audio_paths(self):
+        bundle = self.root/'named.zip'
+        export_set(self.boards,self.library,self.profile['id'],bundle)
+        with zipfile.ZipFile(bundle) as archive:
+            manifest = json.loads(archive.read('manifest.json'))
+            audio = archive.read(manifest['sounds'][0]['file'])
+        other_lib = Library(self.root/'reject-library',self.root/'empty-samples')
+        other_boards = Boards(self.root/'reject-sets.json',other_lib)
+        for name in ('audio/../escaped.wav','audio/subdir/sample.wav','audio/evil\\sample.wav','/audio/sample.wav','audio/sample.txt','audio/sample.wav'):
+            changed = deepcopy(manifest)
+            changed['sounds'][0]['file'] = name
+            if name == 'audio/sample.wav':
+                changed['sounds'].append({**changed['sounds'][0],'id':'a'*24})
+            with zipfile.ZipFile(bundle,'w') as archive:
+                archive.writestr('manifest.json',json.dumps(changed))
+                archive.writestr(name,audio)
+            before = other_boards.snapshot(),deepcopy(other_lib.items)
+            with self.assertRaises(ValueError):
+                import_set(other_boards,other_lib,bundle)
+            self.assertEqual((other_boards.snapshot(),other_lib.items),before)
+
     def test_invalid_bundle_cannot_partially_publish_or_extract_paths(self):
         bundle=self.root/'good.zip';export_set(self.boards,self.library,self.profile['id'],bundle)
         with zipfile.ZipFile(bundle) as z:
@@ -181,7 +262,7 @@ class ManagementTests(unittest.TestCase):
         for variant in ('traversal','broken-audio','bad-filename'):
             entries=dict(files)
             if variant=='traversal':entries['../../escaped']=b'no'
-            elif variant=='broken-audio':entries[f'audio/{self.id}.wav']=b'broken'
+            elif variant=='broken-audio':entries[json.loads(entries['manifest.json'])['sounds'][0]['file']]=b'broken'
             else:
                 manifest=json.loads(entries['manifest.json']);manifest['sounds'][0]['filename']={}
                 entries['manifest.json']=json.dumps(manifest).encode()
