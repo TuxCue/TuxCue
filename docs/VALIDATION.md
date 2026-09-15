@@ -19,7 +19,7 @@ Local preparation checks on 2026-09-14:
 - X11 checks passed for shortcut registration, conflicts, editor suspension/resume, disabling, and cleanup. No key events were injected into other applications.
 - The AppImage passed extract-and-run checks for import, edit/fades, original filenames, routing, preview isolation, collection moves, restart, phone pairing/playback/revocation, and desktop/phone license endpoints.
 - The packaged tray registered with the desktop and exposed all four controls. Activating Open TuxCue through its D-Bus menu called the browser launcher with the expected URL and restored host environment. Browser startup checks also passed.
-- An isolated 0.4.2 → 0.4.4 handover preserved collection data, microphone routing, and phone pairing. Same-version reuse and three simultaneous launches passed.
+- An isolated 0.4.2 → 0.4.5 handover preserved collection data, microphone routing, and phone pairing. Same-version reuse and three simultaneous launches passed.
 - Browser inspection confirmed the desktop footer and phone legal link/layout at 390×844 portrait and 844×390 landscape, with no phone browser console errors. This is browser viewport testing, not physical-device certification.
 - The documented build command produced the AppImage and source archives outside the checkout. The output-directory guard rejected an in-repository destination. Generated dependencies, caches, and build files were removed from the checkout.
 

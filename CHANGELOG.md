@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.4.4 — unreleased
+## 0.4.5
+
+- Sort the Library, Trash, and tile sound picker alphabetically with natural number ordering. 
+- Style dropdown options with dark backgrounds and green selection highlights.
+- Changed Export set so it keeps original audio names when creatin .zip file
+
+## 0.4.4
 
 - Prepare the source repository for public release under GPL-3.0-or-later.
 - Update Click, h11, and idna to patched versions and record dependency artifact hashes.

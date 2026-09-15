@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "local-soundboard"
-version = "0.4.4"
+version = "0.4.5"
 description = "TuxCue — a local Linux soundboard with a browser interface and virtual microphone"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
