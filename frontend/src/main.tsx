@@ -60,7 +60,9 @@ function App() {
   if(closed)return <main className="loading"><img className="closed-logo" src="/tuxcue-logo.png" alt="TuxCue"/><h1>TuxCue is closed</h1><p>Launch TuxCue again to open your soundboard.</p></main>;
   if(!state||!profile)return <main className="loading"><AudioLines size={42}/><h1>TuxCue</h1><p>{offline?'TuxCue is unavailable. Launch the TuxCue AppImage to open your soundboard.':state&&!profile?'Restart the local service to load this update, then refresh this page.':'Connecting to your audio service…'}</p><button className="secondary" onClick={refresh}><RefreshCw size={16}/>Retry</button></main>;
   const sounds=new Map(state.sounds.map(s=>[s.id,s]));
-  const visible=(view==='trash'?state.trash:state.sounds).filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));
+  const visible=(view==='trash'?state.trash:state.sounds)
+    .filter(s=>s.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base',numeric:true}));
   const playing=state.playing_id===current?.id;
   const progress=playing?Math.min(1,state.position/(state.duration||current?.duration||1)):0;
   const disabled=busy||offline;
