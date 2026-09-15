@@ -28,7 +28,7 @@ Try **3 rows × 8 columns** in landscape for 24 square buttons per page, or **2 
 
 Use the arrows below the board to switch pages. Search covers the whole active sound set and starts at the first results page. Stop all remains available at the top. Reset portrait/landscape restores only that orientation’s defaults.
 
-From version 0.4.5 onward, launch the newer AppImage or its updated launcher directly: it shuts down the older running version and takes over automatically. Phone pairing is retained, and a connected virtual microphone is reconnected. Refresh the phone page to load interface changes. The tray’s Restart command still restarts the version already running.
+From version 0.4.4 onward, launch the newer AppImage or its updated launcher directly: it shuts down the older running version and takes over automatically. Phone pairing is retained, and a connected virtual microphone is reconnected. Refresh the phone page to load interface changes. The tray’s Restart command still restarts the version already running.
 
 ## System tray
 
