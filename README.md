@@ -6,6 +6,10 @@ A Linux soundboard for playing your own clips in Discord and other voice chats. 
 
 TuxCue ships with **no audio files or built-in sound library**. You import your own sounds.
 
+## Why TuxCue
+
+I started TuxCue because I could not find a Linux soundboard app that worked well enough for my needs. I decided to use AI to help create one that does, and I hope it will also be useful to other people who decide to try it.
+
 ## Features
 
 - Configurable sound tiles, rows, columns, colors, labels, and clip volumes.
@@ -76,7 +80,7 @@ On an x86_64 Linux build machine, install Docker, Python 3.10+, Node.js 22.13+, 
 ./scripts/build_appimage.sh
 ```
 
-The same command builds locally and in GitHub Actions on the project's self-hosted runner. Pushing a reviewed version tag builds and publishes the AppImage and corresponding sources; see [the release procedure](docs/RELEASING.md). The script builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.5`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
+The same command builds locally and in GitHub Actions. Pushing a reviewed version tag builds and publishes the AppImage and corresponding sources; see [the release procedure](docs/RELEASING.md). The script builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.5`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
 
 See [build details](docs/APPIMAGE.md) and [contribution/testing instructions](CONTRIBUTING.md).
 

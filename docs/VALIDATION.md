@@ -23,7 +23,7 @@ Local preparation checks on 2026-09-14:
 - Browser inspection confirmed the desktop footer and phone legal link/layout at 390×844 portrait and 844×390 landscape, with no phone browser console errors. This is browser viewport testing, not physical-device certification.
 - The documented build command produced the AppImage and source archives outside the checkout. The output-directory guard rejected an in-repository destination. Generated dependencies, caches, and build files were removed from the checkout.
 
-Normal FUSE execution could not be tested in the execution environment because `/dev/fuse` is unavailable. The AppImage's extract-and-run mode was used for the packaged tests. GitHub Actions has not run remotely; self-hosted checks and tag-triggered release publishing still need their first live run.
+Normal FUSE execution could not be tested in the execution environment because `/dev/fuse` is unavailable. The AppImage's extract-and-run mode was used for the packaged tests. GitHub Actions and tag-triggered release publishing still need their first live run.
 
 Run commands from [CONTRIBUTING.md](../CONTRIBUTING.md). Use temporary collections and generated tones; do not upload personal collections or unredacted logs. See THIRD_PARTY_NOTICES.md for the upstream runtime's version-inventory limitation.
 

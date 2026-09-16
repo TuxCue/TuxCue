@@ -11,8 +11,9 @@ from soundboard import __version__
 def main():
     selected = list(files())
     forbidden = {'.wav', '.mp3', '.flac', '.ogg', '.opus', '.m4a', '.aac', '.aiff', '.wma', '.zip', '.appimage'}
-    patterns = ['/' + r'home/[^/\s]+/', r'[A-Z]:\\Users\\',
+    patterns = ['/' + r'home/[^/\s]+/', '/' + r'Users/[^/\s]+/', r'[A-Z]:\\Users\\',
                 r'gh[pousr]_[A-Za-z0-9]{20,}', r'github_pat_[A-Za-z0-9_]{20,}',
+                r'glpat-[A-Za-z0-9_-]{20,}', r'AKIA[0-9A-Z]{16}',
                 r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----']
     for path in selected:
         relative = path.relative_to(ROOT)

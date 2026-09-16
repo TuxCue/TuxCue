@@ -32,7 +32,7 @@ git push origin v0.4.5
 
 Pushing this tag authorizes publication. The `Release AppImage` workflow checks that the tag is exactly `vMAJOR.MINOR.PATCH`, matches the application version, and points to a commit reachable from `origin/main`. It invokes the existing build script, including Python tests, frontend compilation, license/source collection, and the no-audio AppDir check. It verifies checksums, uploads all five assets to a draft, and publishes only after successful uploads. It uses the workflow's automatic `GITHUB_TOKEN` with `contents: write`; no runner-registration PAT or extra release secret is needed.
 
-Both workflows target the `Default` runner group with labels `self-hosted`, `linux`, `x64`, `tuxcue`, and `appimage`. Give this repository access to that group. Source checks run on pushes to `main` or manually from the Actions page; pull requests do not automatically execute on the persistent runner. Builds require Docker access and several GB of free disk space. Existing Docker containers are not pruned or stopped.
+Both workflows use the repository's configured runner. Source checks run on pushes to `main` or manually from the Actions page; pull requests do not automatically execute on the persistent runner. Builds require Docker access and several GB of free disk space. Existing Docker containers are not pruned or stopped.
 
 If an upload fails, the release remains a draft. Use **Re-run failed jobs** on the tag workflow to rebuild and replace that draft's assets. Published releases are never overwritten; use a new version and tag for changes. Preserve the corresponding-source archives alongside each AppImage.
 
