@@ -79,7 +79,7 @@ def main():
             load('module-remap-source',f'master={prefix}_feed.monitor',f'source_name={prefix}_mic','source_properties=device.description=TuxCue-Package-Test-Mic priority.session=0')
             load('module-null-sink',f'sink_name={prefix}_phones','rate=48000','channels=2','sink_properties=device.description=TuxCue-Package-Test-Phones priority.session=0')
             initial=launch()
-            assert initial['app']=='TuxCue' and initial['version']=='0.4.5'
+            assert initial['app']=='TuxCue' and initial['version']=='0.4.6'
             assert initial['sounds']==[] and initial['sample_count']==0,'Personal sounds were included in the package'
             assert client.get('/').status_code==200
             legal=client.get('/license');assert legal.status_code==200 and 'GNU GENERAL PUBLIC LICENSE' in legal.text
