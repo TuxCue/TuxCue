@@ -1,10 +1,10 @@
-# TuxCue 0.4.5: phone and tray controls
+# TuxCue 0.4.6: phone and tray controls
 
 ## Start TuxCue
 
-Launch `TuxCue-0.4.5-x86_64.AppImage` directly. If FUSE mounting is unavailable, use its `--appimage-extract-and-run` option.
+Launch `TuxCue-0.4.6-x86_64.AppImage` directly. If FUSE mounting is unavailable, use its `--appimage-extract-and-run` option.
 
-Open <http://127.0.0.1:8765> on your PC. If the page was already open, refresh it and check that the header says 0.4.5. Your collection stays in its existing location, normally `~/TuxCue`.
+Open <http://127.0.0.1:8765> on your PC. If the page was already open, refresh it and check that the header says 0.4.6. Your collection stays in its existing location, normally `~/TuxCue`.
 
 ## Connect your phone
 
