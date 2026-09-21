@@ -1,7 +1,18 @@
 FROM ubuntu:22.04@sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1
-RUN sed -n 's/^deb /deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/tuxcue-sources.list \
-    && apt-get update && apt-get install -y --no-install-recommends \
+ARG UBUNTU_SNAPSHOT=20260901T000000Z
+ENV TUXCUE_UBUNTU_SNAPSHOT=$UBUNTU_SNAPSHOT
+# The minimal base image has no CA bundle. Signed APT metadata authenticates
+# the bootstrap package; all later snapshot access verifies HTTPS normally.
+RUN sed -i "s/^deb /deb [snapshot=${UBUNTU_SNAPSHOT}] /" /etc/apt/sources.list \
+    && sed -n 's/^deb /deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/tuxcue-sources.list \
+    && printf 'Acquire::https::Verify-Peer "false";\n' > /etc/apt/apt.conf.d/99snapshot-bootstrap \
+    && apt-get update -o Acquire::Retries=3 \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm /etc/apt/apt.conf.d/99snapshot-bootstrap \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get update -o Acquire::Retries=3 \
+    && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv python3-dev python3-gi python3-xlib \
     gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1 gir1.2-gstreamer-1.0 \
     gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-pulseaudio \

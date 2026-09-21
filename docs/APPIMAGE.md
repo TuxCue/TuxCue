@@ -57,6 +57,8 @@ The folder must be outside the source checkout. Docker retains its normal build 
 
 GitHub Actions uses the same build script when a maintainer pushes a version tag such as `v0.4.7`. The configured runner needs Docker, Python 3, sudo, apt, and enough free disk space for the build. The workflow installs Node.js, pnpm, and the GitHub CLI. Build output stays in the runner's temporary directory. All five release assets upload to a draft before it is published. See [RELEASING.md](RELEASING.md) for the tag procedure and retry behavior.
 
-The Ubuntu image is pinned by digest; Python/npm dependencies and downloaded packaging tools have recorded versions and hashes. Ubuntu packages still resolve from signed repository metadata at build time. Their actual binary/source versions are recorded, so byte-identical rebuilds are **not** claimed. A changed upstream runtime download fails its pinned hash check rather than silently changing the runtime.
+The Ubuntu image is pinned by digest, and its binary and source packages come from the same dated Ubuntu archive snapshot. The snapshot identifier and actual package versions are recorded in the component inventory. Python/npm dependencies and downloaded packaging tools have recorded versions and hashes. Byte-identical rebuilds are **not** claimed. A changed upstream runtime download fails its pinned hash check rather than silently changing the runtime.
+
+When refreshing Ubuntu dependencies, update `UBUNTU_SNAPSHOT` in `packaging/Dockerfile` to a reviewed UTC snapshot, then run the complete AppImage build so every packaged binary still has its exact corresponding source.
 
 Source archives and release assets must be kept together. See [RELEASING.md](RELEASING.md) and [third-party notices](../THIRD_PARTY_NOTICES.md).

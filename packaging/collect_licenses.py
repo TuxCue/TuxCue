@@ -7,6 +7,7 @@ import gzip
 import hashlib
 import importlib.metadata as metadata
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -87,7 +88,9 @@ def main():
         shutil.copy2(ROOT/name, SOURCES/name)
     # The frontend notice generator copies the full license files, including inherited notices.
     shutil.copytree(ROOT/'frontend/dist/licenses', LICENSES/'javascript', dirs_exist_ok=True)
-    components = {'python': [], 'debian': [], 'rust': [], 'upstream': json.loads((ROOT/'packaging/inputs.json').read_text())}
+    components = {'python': [], 'debian': [], 'rust': [],
+                  'ubuntu_snapshot': os.environ['TUXCUE_UBUNTU_SNAPSHOT'],
+                  'upstream': json.loads((ROOT/'packaging/inputs.json').read_text())}
     components['javascript'] = json.loads((ROOT/'frontend/dist/licenses/components.json').read_text())
     components['javascript_sources'] = json.loads((ROOT/'packaging/javascript-sources.json').read_text())
     for name, entry in components['javascript_sources'].items():
@@ -164,6 +167,8 @@ def main():
     downloads = set()
     apt = SOURCES/'debian'
     apt.mkdir(exist_ok=True)
+    # Let APT keep its download sandbox instead of falling back to root.
+    shutil.chown(apt, user='_apt', group='root')
     for package in sorted(selected):
         fields = subprocess.check_output(['dpkg-query', '-W', '-f',
             '${binary:Package}\t${Version}\t${source:Package}\t${source:Version}', package], text=True).split('\t')
@@ -177,7 +182,8 @@ def main():
         components['debian'].append({'package': binary, 'version': version,
             'source': source, 'source_version': source_version})
         if (source, source_version) not in downloads:
-            subprocess.run(['apt-get', 'source', '--download-only', '--yes', f'{source}={source_version}'], cwd=apt, check=True)
+            subprocess.run(['apt-get', '-o', 'Acquire::Retries=3', 'source', '--download-only', '--yes',
+                            f'{source}={source_version}'], cwd=apt, check=True)
             downloads.add((source, source_version))
     # Preserve preferred source/build scripts, not copies of downloaded tool binaries.
     shutil.copytree(ROOT/'inputs', SOURCES/'upstream', dirs_exist_ok=True,
