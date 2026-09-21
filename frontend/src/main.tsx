@@ -1,7 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {AudioLines, Headphones, Mic, Play, Square, Upload, FolderOpen, Search, Cable, Radio, X, RefreshCw, AlertCircle, ChevronDown, Volume2, Plus, Settings2, Copy, Download, Scissors, Pencil, Trash2, RotateCcw, ChevronLeft, ChevronRight, Keyboard, LayoutGrid, Power, Smartphone, Library as LibraryIcon} from 'lucide-react';
-import {registerTools} from './tools';
 import {api,time,downloadSet} from './api';
 import {Editor} from './Editor';
 import {NameDialog,TileDialog,SetSettings} from './SetDialogs';
@@ -34,7 +33,6 @@ function App() {
     catch {setOffline(true);}
   };
   useEffect(()=>{let cancelled=false;let timer:ReturnType<typeof setTimeout>;const tick=async()=>{if(cancelled)return;await refresh();if(!cancelled)timer=setTimeout(tick,450)};void tick();return()=>{cancelled=true;clearTimeout(timer)}},[]);
-  useEffect(()=>registerTools(api,async()=>{await refresh()}),[]);
   const profile=state?.sets?.profiles[state.sets.active_id];
   const current=state?.sounds.find(s=>s.id===(selected??state.playing_id))??state?.sounds[0];
   useEffect(()=>{setPeaks([]);if(!current)return;let cancelled=false;api(`/sounds/${current.id}/waveform`,undefined,'GET').then(r=>{if(!cancelled)setPeaks(r.peaks)}).catch(()=>{});return()=>{cancelled=true}},[current?.id]);
@@ -103,7 +101,6 @@ function App() {
         <div className="library-tools"><label className="search"><Search size={17}/><input aria-label="Search sounds" placeholder="Find a sound…" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button aria-label="Clear search" onClick={()=>setSearch('')}><X size={15}/></button>}</label><span className="library-hint">{view==='trash'?'Restore sounds with their tile assignments':'Shared by all your sound sets'}</span></div>
         <div className="sound-list">{visible.map(sound=><article className="library-row" key={sound.id}><div className="library-name"><strong>{sound.name}</strong><span>{time(sound.duration,true)} · {sound.filename}</span></div><div className="row-actions">{view==='trash'?<button className="secondary" disabled={disabled} onClick={()=>void act(`/sounds/${sound.id}/restore`)}><RotateCcw size={15}/>Restore</button>:<><button className="icon-button" title="Preview only" aria-label={`Preview ${sound.name}`} disabled={disabled} onClick={()=>play(sound,true)}><Headphones size={17}/></button><button className="icon-button" title="Add to active set" aria-label={`Add ${sound.name} to set`} disabled={disabled} onClick={()=>void add(sound)}><Plus size={17}/></button><button className="icon-button" title="Edit audio" aria-label={`Edit ${sound.name}`} disabled={disabled} onClick={()=>setDialog({kind:'editor',sound})}><Scissors size={17}/></button><button className="icon-button" title="Rename sound" aria-label={`Rename ${sound.name}`} disabled={disabled} onClick={()=>setDialog({kind:'rename',sound})}><Pencil size={17}/></button><button className="icon-button danger-text" title="Move to Trash" aria-label={`Move ${sound.name} to Trash`} disabled={disabled} onClick={()=>void trash(sound)}><Trash2 size={17}/></button></>}</div></article>)}</div>
         {!visible.length&&<div className="empty"><FolderOpen size={35}/><h3>{search?'No matching sounds':view==='trash'?'Trash is empty':'Bring your sound collection'}</h3><p>{search?'Try another name.':view==='trash'?'Removed sounds can be restored here.':'Import audio files to get started.'}</p></div>}
-        {view==='library'&&!!state.sample_count&&<button className="sample-import" disabled={disabled||state.importing} onClick={async()=>{const r=await act('/samples/import');if(r){setNotice(`${r.imported} sample sounds available in this set.`);if(r.errors.length)setError(r.errors.map((e:{name:string;error:string})=>`${e.name}: ${e.error}`).join(' '))}}}><FolderOpen size={16}/>{state.importing?'Importing sample sounds…':`Load sample folder (${state.sample_count} sounds)`}</button>}
       </>}
     </section>
     <aside className="routing"><div className="routing-title"><Cable size={20}/><h2>Audio routing</h2></div><div className={`connection ${state.connected ? 'connected' : ''}`}><span className="status-dot"/><strong>{state.connected ? 'Virtual microphone connected' : 'Preview mode'}</strong></div>

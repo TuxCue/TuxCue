@@ -27,7 +27,7 @@ class FlatLibraryTests(unittest.TestCase):
     def test_original_mp3_bytes_and_name_survive_import_and_cache_rebuild(self):
         source = self.samples/'Goose_honk - Hello!.mp3'
         subprocess.run(['ffmpeg','-v','error','-i',str(self.wav),str(source)],check=True)
-        library = Library(self.directory,self.samples)
+        library = Library(self.directory)
         sound = library.import_file(source,source.name)
         self.assertEqual(sound['stored_file'],source.name)
         self.assertEqual((self.directory/source.name).read_bytes(),source.read_bytes())
@@ -40,7 +40,7 @@ class FlatLibraryTests(unittest.TestCase):
         self.assertEqual(len(library.list()),1)
 
     def test_collisions_unsafe_names_and_edits_never_overwrite_other_files(self):
-        library = Library(self.directory,self.samples)
+        library = Library(self.directory)
         existing = self.directory/'Hello.wav'; existing.write_bytes(b'Keep me')
         first = library.import_file(self.wav,'Hello.wav')
         self.assertEqual(first['stored_file'],'Hello (2).wav')
@@ -53,7 +53,7 @@ class FlatLibraryTests(unittest.TestCase):
         self.assertTrue(all(p.name=='.cache' for p in self.directory.iterdir() if p.is_dir()))
         library.rename(first['id'],'My title')
         library.trash(first['id']); library.trash(first['id'],restore=True)
-        reopened = Library(self.directory,self.samples)
+        reopened = Library(self.directory)
         self.assertEqual(reopened.get(first['id'])['name'],'My title')
         self.assertEqual((self.directory/first['stored_file']).read_bytes(),self.wav.read_bytes())
 
@@ -73,7 +73,7 @@ class FlatLibraryTests(unittest.TestCase):
         sets=self.root/'sets.json'
         atomic_json(sets, {'untouched':'Saved board bytes'})
         before=sets.read_bytes()
-        library=Library(self.directory,self.samples)
+        library=Library(self.directory,legacy_originals=self.samples)
         self.assertEqual(set(library.items),set(items))
         for sid,old in items.items():
             self.assertEqual({k:library.items[sid][k] for k in old},old)
@@ -83,13 +83,13 @@ class FlatLibraryTests(unittest.TestCase):
         self.assertTrue((self.directory/'Missing original.wav').exists())
         self.assertEqual(sets.read_bytes(),before)
         stable=deepcopy(library.items)
-        self.assertEqual(Library(self.directory,self.samples).items,stable)
+        self.assertEqual(Library(self.directory).items,stable)
         boards=Boards(self.root/'actual-sets.json',library)
         boards.set_tile(boards.active()['id'],0,{'sound_id':first_id,'shortcut':'Ctrl+1'})
-        self.assertEqual(Boards(self.root/'actual-sets.json',Library(self.directory,self.samples)).active()['tiles'][0]['sound_id'],first_id)
+        self.assertEqual(Boards(self.root/'actual-sets.json',Library(self.directory)).active()['tiles'][0]['sound_id'],first_id)
 
     def test_failed_metadata_commit_rolls_back_import_and_migration(self):
-        library=Library(self.directory,self.samples)
+        library=Library(self.directory)
         with patch('soundboard.library.atomic_json',side_effect=OSError('disk full')):
             with self.assertRaises(OSError):library.import_file(self.wav,'Keep_Name.wav')
         self.assertEqual(library.items,{})
@@ -99,11 +99,11 @@ class FlatLibraryTests(unittest.TestCase):
         items={sid:{'id':sid,'name':'Legacy','filename':'Legacy.mp3','duration':.1}}
         atomic_json(self.directory/'library.json',items)
         with patch('soundboard.library.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(OSError):Library(self.directory,self.samples)
+            with self.assertRaises(OSError):Library(self.directory)
         self.assertEqual(json.loads((self.directory/'library.json').read_text()),items)
         self.assertEqual((legacy/'audio.wav').read_bytes(),self.wav.read_bytes())
         self.assertFalse((self.directory/'Legacy.wav').exists())
-        self.assertTrue(Library(self.directory,self.samples).path(sid).is_file())
+        self.assertTrue(Library(self.directory).path(sid).is_file())
 
 
 if __name__=='__main__':unittest.main()

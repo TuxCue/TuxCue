@@ -98,7 +98,7 @@ def import_set(boards, library, archive_path):
             if set(names) != allowed:
                 raise ValueError('The bundle contains unexpected or missing files.')
             # Decode and validate everything in a temporary library before publishing.
-            staging = Library(Path(temp)/'library', Path(temp)/'samples')
+            staging = Library(Path(temp)/'library')
             prepared = []
             for old_id, item in by_id.items():
                 filename = Path(item['file']).name

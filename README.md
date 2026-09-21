@@ -62,7 +62,7 @@ The default collection folder is `~/TuxCue`. Change it in **Settings → Storage
 
 Original filenames are preserved, with a suffix added for collisions. Playback WAVs are cached in `library/.cache/`. Trash is reversible; it does not immediately erase the underlying audio. Back up the whole collection folder.
 
-There is no cloud account or built-in telemetry. Phone control is off by default and uses **unencrypted HTTP on your trusted local network**. Pairing is access control, not encryption. Do not expose its port to the internet. The desktop API trusts local processes; this is not a security boundary between users of a shared PC. Compatible browsers may expose the app's optional sound-list/play/stop tools to their assistant integration.
+There is no cloud account or built-in telemetry. Phone control is off by default and uses **unencrypted HTTP on your trusted local network**. Pairing is access control, not encryption. Do not expose its port to the internet. The desktop API trusts local processes; this is not a security boundary between users of a shared PC.
 
 Users are responsible for ensuring they have the necessary rights to any audio or other content they import into TuxCue. Exported sets contain their assigned audio, so share them accordingly.
 

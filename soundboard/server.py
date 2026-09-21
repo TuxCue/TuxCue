@@ -122,7 +122,8 @@ class NoHotkeys:
 def create_app(project: Path, state_dir: Path | None = None, audio_factory=AudioEngine, hotkeys_factory=Hotkeys, storage=None):
     state_dir = state_dir or project / '.state'
     state_dir.mkdir(parents=True, exist_ok=True)
-    library = Library(state_dir / 'library', project / 'sound-files')
+    # Early development collections could recover original files from this folder.
+    library = Library(state_dir / 'library', legacy_originals=project / 'sound-files')
     boards = Boards(state_dir/'sets.json',library)
     importing = threading.Lock()
     mutations = threading.RLock()
@@ -255,7 +256,7 @@ def create_app(project: Path, state_dir: Path | None = None, audio_factory=Audio
             devices,device_error={'inputs':[],'outputs':[],'server':'Unavailable'},str(e)
         return {**engine.status(),'devices':devices,'device_error':device_error,'sounds':library.list(),
                 'trash':library.list(trashed=True),'sets':boards.snapshot(),'hotkeys':request.app.state.hotkeys.state(),
-                'sample_count':len(library.sample_names()),'importing':importing.locked(),'version':__version__,
+                'importing':importing.locked(),'version':__version__,
                 'app':'TuxCue','instance_id':request.app.state.instance_id,'storage':storage.info() if storage else {'folder':str(state_dir),'default_folder':str(Path.home()/'TuxCue'),'can_change':False}}
 
     @app.get('/api/storage/folders')
@@ -411,22 +412,6 @@ def create_app(project: Path, state_dir: Path | None = None, audio_factory=Audio
                 return item
         finally:
             file.file.close();importing.release()
-
-    @app.post('/api/samples/import')
-    def import_samples():
-        if not importing.acquire(blocking=False): raise ValueError('Wait for the current import to finish.')
-        try:
-            imported,errors=[],[]
-            with mutations:
-                for name in library.sample_names():
-                    try:
-                        item=library.import_sample(name)
-                        if not item.get('trashed'):
-                            imported.append(item)
-                            if not any(t and t['sound_id']==item['id'] for t in boards.active()['tiles']): boards.add(item['id'])
-                    except ValueError as e: errors.append({'name':name,'error':str(e)})
-            return {'imported':len(imported),'errors':errors}
-        finally: importing.release()
 
     @app.post('/api/sets')
     def new_set(body: NewSet):

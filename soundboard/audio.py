@@ -81,18 +81,6 @@ class AudioEngine:
         self.thread = threading.Thread(target=self._watch, name="audio-watch", daemon=True)
         self.thread.start()
 
-    @property
-    def player(self):
-        return self.players[-1]['pipeline'] if self.players else None
-
-    @property
-    def playing_id(self):
-        return self.players[-1]['sound_id'] if self.players else None
-
-    @property
-    def play_mode(self):
-        return self.players[-1]['mode'] if self.players else None
-
     def devices(self, refresh=False):
         with self.lock:
             if self._devices and not refresh and time.monotonic() - self._devices_time < 2:
@@ -283,15 +271,17 @@ class AudioEngine:
 
     def status(self):
         with self.lock:
+            current = self.players[-1] if self.players else None
             position, duration = 0.0, 0.0
-            if self.player:
-                ok, value = self.player.query_position(Gst.Format.TIME)
+            if current:
+                ok, value = current['pipeline'].query_position(Gst.Format.TIME)
                 position = value / Gst.SECOND if ok else 0
-                ok, value = self.player.query_duration(Gst.Format.TIME)
+                ok, value = current['pipeline'].query_duration(Gst.Format.TIME)
                 duration = value / Gst.SECOND if ok else 0
             return {"connected": self.connected, "virtual_microphone": "TuxCue Microphone",
                     "virtual_source_name": self.source_name, "settings": dict(self.settings),
-                    "playing_id": self.playing_id, "mode": self.play_mode,
+                    "playing_id": current['sound_id'] if current else None,
+                    "mode": current['mode'] if current else None,
                     "position": position, "duration": duration, "error": self.last_error,
                     "playing": [{k:v for k,v in r.items() if k != 'pipeline'} for r in self.players]}
 
@@ -308,7 +298,7 @@ class AudioEngine:
                                 LOG.warning("Playback error: %s (%s)", err, detail)
                                 self.last_error = "Playback stopped: " + err.message
                             self._finish(record)
-                    if (self.connected or self.player) and time.monotonic() > next_health:
+                    if (self.connected or self.players) and time.monotonic() > next_health:
                         next_health = time.monotonic() + 2
                         devices = self.devices(refresh=True)
                         if self.settings["output"] not in {d["name"] for d in devices["outputs"]}:

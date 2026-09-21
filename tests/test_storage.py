@@ -21,7 +21,7 @@ class StorageTests(unittest.TestCase):
         self.config=self.root/'config/tuxcue/storage.json'
         self.default=self.root/'home/TuxCue'
         self.source=self.project/'.state'
-        self.lib=Library(self.source/'library',self.project/'sound-files')
+        self.lib=Library(self.source/'library')
         wav=self.root/'sample.wav';wav.write_bytes(wav_bytes())
         self.sound=self.lib.import_file(wav,'sample.wav')
         self.boards=Boards(self.source/'sets.json',self.lib)
@@ -42,7 +42,7 @@ class StorageTests(unittest.TestCase):
         store=self.open()
         self.assertEqual(store.directory,self.default)
         self.assertEqual(self.lib.path(self.sound['id']).read_bytes(),original)
-        self.assertEqual(Library(self.default/'library',self.project/'sound-files').path(self.sound['id']).read_bytes(),original)
+        self.assertEqual(Library(self.default/'library').path(self.sound['id']).read_bytes(),original)
         self.assertEqual(json.loads((self.default/'sets.json').read_text())['active_id'],self.boards.active()['id'])
         self.assertTrue((self.source/MOVED_MARKER).exists())
         self.assertEqual(json.loads(self.config.read_text())['folder'],str(self.default))
@@ -121,9 +121,9 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(response.status_code,200,response.text)
             self.assertTrue((target/'library'/'Edited after move.wav').exists())
             self.assertEqual(client.post('/api/storage',json={'folder':str(self.root/'denied')}).status_code,403)
-        saved=Library(target/'library',self.project/'sound-files')
+        saved=Library(target/'library')
         self.assertEqual(saved.get(self.sound['id'])['name'],'Moved sound')
-        self.assertEqual(Library(self.default/'library',self.project/'sound-files').get(self.sound['id'])['name'],'sample')
+        self.assertEqual(Library(self.default/'library').get(self.sound['id'])['name'],'sample')
         self.assertEqual(browse_folders(target.parent)['folders'],['new TuxCue'])
 
 if __name__=='__main__':unittest.main()

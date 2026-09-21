@@ -1,4 +1,4 @@
-"""Owned audio library. Never edits files in the supplied sample directory."""
+"""Owned audio library with migration support for early collections."""
 from __future__ import annotations
 
 import hashlib
@@ -44,9 +44,9 @@ def readable_filename(value):
 
 
 class Library:
-    def __init__(self, directory: Path, samples: Path):
+    def __init__(self, directory: Path, legacy_originals: Path | None = None):
         self.directory = directory
-        self.samples = samples.resolve()
+        self.legacy_originals = legacy_originals.resolve() if legacy_originals else None
         self.directory.mkdir(parents=True, exist_ok=True)
         self.index = directory / "library.json"
         self.lock = threading.RLock()
@@ -133,8 +133,8 @@ class Library:
                 raise ValueError('Saved audio files must not be symbolic links.')
             if 'stored_file' not in item:
                 filename = readable_filename(item.get('filename', item['name'] + '.wav'))
-                original = self.samples / filename
-                if (not item.get('source_id') and original.is_file() and not original.is_symlink()
+                original = self.legacy_originals / filename if self.legacy_originals else None
+                if (not item.get('source_id') and original and original.is_file() and not original.is_symlink()
                         and hashlib.sha256(original.read_bytes()).hexdigest()[:24] == sound_id):
                     item = self.store_audio(item, original, legacy, filename)
                 else:
@@ -209,17 +209,6 @@ class Library:
             ], capture_output=True, text=True, timeout=90, check=True)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
             raise ValueError('The audio file could not be decoded. Try importing it again.') from error
-
-    def sample_names(self):
-        if not self.samples.is_dir():
-            return []
-        return sorted(p.name for p in self.samples.iterdir()
-                      if p.is_file() and not p.is_symlink() and p.suffix.lower() in EXTENSIONS)
-
-    def import_sample(self, name: str):
-        if name not in self.sample_names():
-            raise ValueError("Choose a sound from the sample folder.")
-        return self.import_file(self.samples / name, name, restore=False)
 
     def import_file(self, path: Path, filename: str, restore=True, max_bytes=MAX_BYTES):
         # Hashing and conversion run outside the metadata lock; publishing is atomic.
