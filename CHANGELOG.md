@@ -3,6 +3,7 @@
 ## 0.4.7
 
 - Add a headphone button to every populated board tile for local-only preview, including while the virtual microphone is connected.
+- Pin Ubuntu binary and source packages to the same archive snapshot so AppImage source collection is not broken by mirror rotation.
 
 ## 0.4.6
 
