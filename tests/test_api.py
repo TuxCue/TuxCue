@@ -54,7 +54,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.app.state.audio.played[2],"preview")
         again=self.client.post('/api/import',files={"file":("copy.wav",payload)},headers=self.headers)
         self.assertEqual(again.json()["id"],item["id"])
-        persisted=Library(self.project/'.state/library',self.project/'sound-files')
+        persisted=Library(self.project/'.state/library')
         self.assertEqual(len(persisted.list()),1)
         self.assertTrue(persisted.path(item["id"]).is_file())
         self.assertTrue(self.client.get(f'/api/sounds/{item["id"]}/waveform').json()["peaks"])
@@ -70,12 +70,6 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/settings',json={"arbitrary":"x"},headers=self.headers).status_code,422)
         result=self.client.post('/api/import',content=b'',headers={**self.headers,"Content-Length":"999999999"})
         self.assertEqual(result.status_code,413)
-    def test_sample_folder_cannot_escape_or_follow_links(self):
-        samples=self.project/'sound-files';samples.mkdir()
-        (samples/'external.mp3').symlink_to('/etc/passwd')
-        self.assertEqual(self.app.state.library.sample_names(),[])
-        with self.assertRaises(ValueError):
-            self.app.state.library.import_sample('../anything.mp3')
     def test_graceful_shutdown_uses_service_callback(self):
         called=[]
         self.app.state.shutdown=lambda:called.append(True)

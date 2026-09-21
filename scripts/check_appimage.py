@@ -80,7 +80,7 @@ def main():
             load('module-null-sink',f'sink_name={prefix}_phones','rate=48000','channels=2','sink_properties=device.description=TuxCue-Package-Test-Phones priority.session=0')
             initial=launch()
             assert initial['app']=='TuxCue' and initial['version']=='0.4.7'
-            assert initial['sounds']==[] and initial['sample_count']==0,'Personal sounds were included in the package'
+            assert initial['sounds']==[],'Personal sounds were included in the package'
             assert client.get('/').status_code==200
             legal=client.get('/license');assert legal.status_code==200 and 'GNU GENERAL PUBLIC LICENSE' in legal.text
             notices=client.get('/notices');assert notices.status_code==200 and 'Third-party components' in notices.text

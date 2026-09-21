@@ -100,17 +100,14 @@ class ManagementTests(unittest.TestCase):
         self.assertFalse(responses[0].json()['started'])
         self.assertIsNone(self.app.state.audio.played)
 
-    def test_trash_restore_rename_and_sample_reimport(self):
+    def test_trash_restore_and_rename(self):
         self.post(f'/sounds/{self.id}/rename',json={'name':'My renamed sound'})
         self.assertEqual(self.post(f'/sounds/{self.id}/trash').status_code,200)
         self.assertEqual(self.library.list(),[])
         self.assertEqual(self.boards.active()['tiles'][0]['sound_id'],self.id)
         self.assertEqual(self.post('/play',json={'sound_id':self.id,'mode':'preview'}).status_code,400)
-        samples=self.root/'sound-files';samples.mkdir();(samples/'sample.wav').write_bytes(wav_bytes())
-        self.post('/samples/import')
-        self.assertEqual(self.library.list(),[], 'Bulk sample import must not resurrect trashed sounds')
         self.assertEqual(self.post(f'/sounds/{self.id}/restore').status_code,200)
-        persisted=Library(self.root/'.state/library',samples)
+        persisted=Library(self.root/'.state/library')
         self.assertEqual(persisted.get(self.id)['name'],'My renamed sound')
         self.assertTrue(persisted.path(self.id).is_file())
         self.assertEqual(self.boards.active()['tiles'][0]['sound_id'],self.id)
@@ -159,7 +156,7 @@ class ManagementTests(unittest.TestCase):
         response=self.client.get(f'/api/sets/{pid}/export')
         self.assertEqual(response.status_code,200)
         archive=self.root/'bundle.zip';archive.write_bytes(response.content)
-        other_lib=Library(self.root/'other-library',self.root/'empty-samples')
+        other_lib=Library(self.root/'other-library')
         other_boards=Boards(self.root/'other-sets.json',other_lib)
         imported=import_set(other_boards,other_lib,archive)
         self.assertEqual(imported['tiles'][0]['label'],'Hello')
@@ -187,7 +184,7 @@ class ManagementTests(unittest.TestCase):
             self.assertEqual(manifest['version'],2)
             self.assertEqual(set(archive.namelist()),{'manifest.json','audio/sample.wav','audio/Victory tune.mp3'})
             self.assertEqual(archive.read('audio/Victory tune.mp3'),source.read_bytes())
-        other_lib = Library(self.root/'other-library',self.root/'empty-samples')
+        other_lib = Library(self.root/'other-library')
         other_boards = Boards(self.root/'other-sets.json',other_lib)
         import_set(other_boards,other_lib,bundle)
         imported = other_lib.get(sound['id'])
@@ -227,7 +224,7 @@ class ManagementTests(unittest.TestCase):
         with zipfile.ZipFile(bundle,'w') as archive:
             archive.writestr('manifest.json',json.dumps(manifest))
             archive.write(self.library.path(self.id),f'audio/{self.id}.wav')
-        other_lib = Library(self.root/'legacy-library',self.root/'empty-samples')
+        other_lib = Library(self.root/'legacy-library')
         other_boards = Boards(self.root/'legacy-sets.json',other_lib)
         imported = import_set(other_boards,other_lib,bundle)
         self.assertEqual(imported['tiles'][0]['sound_id'],self.id)
@@ -240,7 +237,7 @@ class ManagementTests(unittest.TestCase):
         with zipfile.ZipFile(bundle) as archive:
             manifest = json.loads(archive.read('manifest.json'))
             audio = archive.read(manifest['sounds'][0]['file'])
-        other_lib = Library(self.root/'reject-library',self.root/'empty-samples')
+        other_lib = Library(self.root/'reject-library')
         other_boards = Boards(self.root/'reject-sets.json',other_lib)
         for name in ('audio/../escaped.wav','audio/subdir/sample.wav','audio/evil\\sample.wav','/audio/sample.wav','audio/sample.txt','audio/sample.wav'):
             changed = deepcopy(manifest)
