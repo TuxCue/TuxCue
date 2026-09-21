@@ -1,10 +1,18 @@
 # Changelog
 
+## 0.4.7
+
+- Add a headphone button to every populated board tile for local-only preview, including while the virtual microphone is connected.
+
+## 0.4.6
+
+- Correct release metadata, dependency locks, documentation, and release validation for the AppImage build.
+
 ## 0.4.5
 
-- Sort the Library, Trash, and tile sound picker alphabetically with natural number ordering. 
+- Sort the Library, Trash, and tile sound picker alphabetically with natural number ordering.
 - Style dropdown options with dark backgrounds and green selection highlights.
-- Changed Export set so it keeps original audio names when creatin .zip file
+- Preserve readable audio filenames and original formats when exporting a set.
 
 ## 0.4.4
 

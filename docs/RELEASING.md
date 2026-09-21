@@ -23,11 +23,11 @@ The third-party archive contains upstream source material and may include upstre
 
 ## Publish through GitHub Actions
 
-After completing the review above, commit the version and release changes to `main` and push that branch. For version 0.4.6:
+After completing the review above, commit the version and release changes to `main` and push that branch. For version 0.4.7:
 
 ```bash
-git tag -a v0.4.6 -m "TuxCue 0.4.6"
-git push origin v0.4.6
+git tag -a v0.4.7 -m "TuxCue 0.4.7"
+git push origin v0.4.7
 ```
 
 Pushing this tag authorizes publication. The `Release AppImage` workflow checks that the tag is exactly `vMAJOR.MINOR.PATCH`, matches the application version, and points to a commit reachable from `origin/main`. It invokes the existing build script, including Python tests, frontend compilation, license/source collection, and the no-audio AppDir check. It verifies checksums, uploads all five assets to a draft, and publishes only after successful uploads. It uses the workflow's automatic `GITHUB_TOKEN` with `contents: write`; no runner-registration PAT or extra release secret is needed.
