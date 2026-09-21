@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.8
+
+- Add a quick remove button to soundboard tiles and a multi-select mode for removing several tile assignments at once.
+
 ## 0.4.7
 
 - Add a headphone button to every populated board tile for local-only preview, including while the virtual microphone is connected.

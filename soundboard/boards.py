@@ -176,6 +176,20 @@ class Boards:
             return p['tiles'][index]
         return self.mutate(change)
 
+    def remove_tiles(self, profile_id, indexes):
+        if (not isinstance(indexes, list) or not indexes or len(indexes) > 1000
+                or any(type(index) is not int or not 0 <= index < 1000 for index in indexes)):
+            raise ValueError('Choose between 1 and 1,000 valid tile positions.')
+        def change(d):
+            p = self.profile(d, profile_id)
+            removed = 0
+            for index in set(indexes):
+                if index < len(p['tiles']) and p['tiles'][index] is not None:
+                    p['tiles'][index] = None
+                    removed += 1
+            return {'removed': removed}
+        return self.mutate(change)
+
     def add(self, sound_id, profile_id=None):
         self.library.get(sound_id)
         def change(d):

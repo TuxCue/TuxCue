@@ -74,7 +74,7 @@ def main():
             before=state();original=(collection/'library/Upgrade test.wav').read_bytes()
             old_audio={m['argument'] for m in module_list() if prefix+'_app' in m['argument']}
             assert old_audio
-            new=launch('0.4.7');after=ready('0.4.7',connected=True)
+            new=launch('0.4.8');after=ready('0.4.8',connected=True)
             old.wait(timeout=10);assert old.returncode==0
             assert new.poll() is None
             assert after['instance_id']!=before['instance_id']
@@ -85,19 +85,19 @@ def main():
             # PipeWire may reuse numeric module IDs; ownership is identified by session tags.
             assert new_audio and old_audio.isdisjoint(new_audio),(old_audio,new_audio)
             assert not after['playing'] and not after['error']
-            passed.extend(['0.4.7 cleanly replaces a running 0.4.2 AppImage','Collection, set, original audio and settings survive',
+            passed.extend(['0.4.8 cleanly replaces a running 0.4.2 AppImage','Collection, set, original audio and settings survive',
                            'Connected virtual microphone restored after old owned devices are released','Paired phone reconnects without pairing again'])
-            duplicate=launch('0.4.7');duplicate.wait(timeout=10);assert duplicate.returncode==0
+            duplicate=launch('0.4.8');duplicate.wait(timeout=10);assert duplicate.returncode==0
             assert state()['instance_id']==after['instance_id'];passed.append('Same-version --no-browser launch reuses the running app')
             stub=root/'bin';stub.mkdir();opener=stub/'xdg-open'
             opener.write_text('#!/bin/sh\nprintf "%s" "$1" > "$TUXCUE_TEST_BROWSER_URL"\n');opener.chmod(0o755)
-            duplicate=launch('0.4.7',{**env,'PATH':str(stub)+os.pathsep+env['PATH'],'TUXCUE_TEST_BROWSER_URL':str(root/'opened-url')},browser=True)
+            duplicate=launch('0.4.8',{**env,'PATH':str(stub)+os.pathsep+env['PATH'],'TUXCUE_TEST_BROWSER_URL':str(root/'opened-url')},browser=True)
             duplicate.wait(timeout=10);assert duplicate.returncode==0
             assert (root/'opened-url').read_text()==f'http://127.0.0.1:{port}'
             assert state()['instance_id']==after['instance_id'];passed.append('Same-version browser launch opens the existing instance before exiting')
             shutdown(new)
-            racers=[launch('0.4.7') for _ in range(3)]
-            fresh=ready('0.4.7',connected=False)
+            racers=[launch('0.4.8') for _ in range(3)]
+            fresh=ready('0.4.8',connected=False)
             deadline=time.monotonic()+12
             while time.monotonic()<deadline and sum(p.poll() is None for p in racers)>1:time.sleep(.1)
             running=[p for p in racers if p.poll() is None]
