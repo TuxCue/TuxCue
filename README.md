@@ -32,14 +32,14 @@ The supported package format is an **x86_64 AppImage**. Release preparation does
 With the AppImage in your current folder:
 
 ```bash
-chmod +x TuxCue-0.4.7-x86_64.AppImage
-./TuxCue-0.4.7-x86_64.AppImage
+chmod +x TuxCue-0.4.8-x86_64.AppImage
+./TuxCue-0.4.8-x86_64.AppImage
 ```
 
 If FUSE mounting is unavailable:
 
 ```bash
-./TuxCue-0.4.7-x86_64.AppImage --appimage-extract-and-run
+./TuxCue-0.4.8-x86_64.AppImage --appimage-extract-and-run
 ```
 
 The app opens your default browser. Its desktop interface is also at <http://127.0.0.1:8765>. Closing the browser leaves TuxCue running; use **Quit TuxCue** in the tray or the interface to stop it. See [AppImage details](docs/APPIMAGE.md) for requirements, checksums, and rebuilding.
@@ -78,7 +78,7 @@ On an x86_64 Linux build machine, install Docker, Python 3.10+, Node.js 22.13+, 
 ./scripts/build_appimage.sh
 ```
 
-The same command builds locally and in GitHub Actions. Pushing a reviewed version tag builds and publishes the AppImage and corresponding sources; see [the release procedure](docs/RELEASING.md). The script builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.7`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
+The same command builds locally and in GitHub Actions. Pushing a reviewed version tag builds and publishes the AppImage and corresponding sources; see [the release procedure](docs/RELEASING.md). The script builds a temporary source snapshot and writes release files outside the checkout, by default to `${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.8`. Set `TUXCUE_OUTPUT_DIR` to choose another external folder. No generated dependencies, browser assets, AppImages, or source archives belong in Git.
 
 See [build details](docs/APPIMAGE.md) and [contribution/testing instructions](CONTRIBUTING.md).
 

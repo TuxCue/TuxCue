@@ -23,7 +23,7 @@ The Python tests use temporary collections and generated audio. They need local 
 On a desktop, optional integration checks are:
 
 ```bash
-export TUXCUE_APPIMAGE="${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.7/TuxCue-0.4.7-x86_64.AppImage"
+export TUXCUE_APPIMAGE="${XDG_CACHE_HOME:-$HOME/.cache}/tuxcue/releases/0.4.8/TuxCue-0.4.8-x86_64.AppImage"
 "$TUXCUE_TEST_ENV/bin/python" scripts/check_audio.py
 "$TUXCUE_TEST_ENV/bin/python" scripts/check_hotkeys.py
 "$TUXCUE_TEST_ENV/bin/python" scripts/check_appimage.py

@@ -89,6 +89,10 @@ class Move(StrictModel):
     target: int = Field(ge=0,lt=1000)
 
 
+class TileIndexes(StrictModel):
+    indexes: list[int] = Field(min_length=1, max_length=1000)
+
+
 class GlobalSettings(StrictModel):
     hotkeys_enabled: bool | None = None
     stop_shortcut: str | None = None
@@ -430,6 +434,10 @@ def create_app(project: Path, state_dir: Path | None = None, audio_factory=Audio
     def remove_set(profile_id: str,request: Request):
         with mutations:
             stop(request.app.state.audio);boards.remove(profile_id);return {'ok':True}
+
+    @app.post('/api/sets/{profile_id}/tiles/remove')
+    def remove_tiles(profile_id: str,body: TileIndexes):
+        with mutations: return boards.remove_tiles(profile_id,body.indexes)
 
     @app.post('/api/sets/{profile_id}/tiles/{index}')
     def tile_settings(profile_id: str,index: int,body: TileChange):

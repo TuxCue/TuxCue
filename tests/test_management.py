@@ -130,7 +130,12 @@ class ManagementTests(unittest.TestCase):
         self.post(f'/sets/{pid}/move',json={'source':25,'target':1})
         self.assertEqual(self.boards.active()['tiles'][1]['id'],t['id'])
         self.assertIsNone(self.boards.active()['tiles'][25])
-        self.post(f'/sets/{pid}/tiles/1',json={'sound_id':None})
+        self.boards.set_tile(pid,2,{'sound_id':self.id})
+        removed=self.post(f'/sets/{pid}/tiles/remove',json={'indexes':[1,2,2,999]})
+        self.assertEqual(removed.status_code,200,removed.text)
+        self.assertEqual(removed.json()['removed'],2)
+        self.assertIsNone(self.boards.active()['tiles'][1])
+        self.assertIsNone(self.boards.active()['tiles'][2])
         self.assertEqual(len(self.library.list()),1, 'Removing a tile keeps shared audio')
 
     def test_shortcut_conflicts_roll_back_whole_settings_change(self):
