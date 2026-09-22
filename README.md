@@ -16,6 +16,10 @@ TuxCue ships with **no audio files or built-in sound library**. You import your 
 | --- | --- |
 | ![TuxCue settings for grid size, playback behavior, and global shortcuts](docs/screenshots/set-settings.png) | ![TuxCue audio editor with waveform, trim handles, gain, and fade controls](docs/screenshots/audio-editor.png) |
 
+| Phone remote control | Collection storage |
+| --- | --- |
+| ![TuxCue remote-control settings with local network pairing controls](docs/screenshots/remote-control.png) | ![TuxCue storage settings for choosing and moving the collection folder](docs/screenshots/storage.png) |
+
 ## Why TuxCue
 
 I started TuxCue because I could not find a Linux soundboard app that worked well enough for my needs. I decided to use AI to help create one that does, and I hope it will also be useful to other people who decide to try it.
