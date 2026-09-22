@@ -6,6 +6,16 @@ A Linux soundboard for playing your own clips in Discord and other voice chats. 
 
 TuxCue ships with **no audio files or built-in sound library**. You import your own sounds.
 
+## Screenshots
+
+### Soundboard and audio routing
+
+![TuxCue soundboard with sound tiles, local preview, and audio routing controls](docs/screenshots/soundboard.png)
+
+| Set and shortcut settings | Audio editor |
+| --- | --- |
+| ![TuxCue settings for grid size, playback behavior, and global shortcuts](docs/screenshots/set-settings.png) | ![TuxCue audio editor with waveform, trim handles, gain, and fade controls](docs/screenshots/audio-editor.png) |
+
 ## Why TuxCue
 
 I started TuxCue because I could not find a Linux soundboard app that worked well enough for my needs. I decided to use AI to help create one that does, and I hope it will also be useful to other people who decide to try it.
