@@ -1,10 +1,13 @@
 FROM ubuntu:22.04@sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1
-ARG UBUNTU_SNAPSHOT=20260901T000000Z
+ARG UBUNTU_SNAPSHOT=20260904T000000Z
 ENV TUXCUE_UBUNTU_SNAPSHOT=$UBUNTU_SNAPSHOT
-# The minimal base image has no CA bundle. Signed APT metadata authenticates
+# Point APT directly at the immutable snapshot. The snapshot= source option
+# still leaves apt-get source free to request files from the moving archive.
+# The minimal base image has no CA bundle, so signed APT metadata authenticates
 # the bootstrap package; all later snapshot access verifies HTTPS normally.
-RUN sed -i "s/^deb /deb [snapshot=${UBUNTU_SNAPSHOT}] /" /etc/apt/sources.list \
+RUN sed -i "s|http://archive.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/|g; \
+    s|http://security.ubuntu.com/ubuntu/|https://snapshot.ubuntu.com/ubuntu/${UBUNTU_SNAPSHOT}/|g" /etc/apt/sources.list \
     && sed -n 's/^deb /deb-src /p' /etc/apt/sources.list > /etc/apt/sources.list.d/tuxcue-sources.list \
     && printf 'Acquire::https::Verify-Peer "false";\n' > /etc/apt/apt.conf.d/99snapshot-bootstrap \
     && apt-get update -o Acquire::Retries=3 \
