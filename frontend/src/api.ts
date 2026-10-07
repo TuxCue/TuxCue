@@ -7,7 +7,10 @@ export async function api(path:string,body?:unknown,method='POST') {
 }
 export function time(seconds:number,precise=false) {
   const n=Math.max(0,seconds||0);
-  return `${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}${precise?'.'+String(Math.floor((n%1)*1000)).padStart(3,'0'):''}`;
+  // Round once so binary floating-point boundaries don't display 4.6 as 4.599.
+  const milliseconds=Math.round(n*1000);
+  const whole=precise?Math.floor(milliseconds/1000):Math.floor(n);
+  return `${Math.floor(whole/60)}:${String(whole%60).padStart(2,'0')}${precise?'.'+String(milliseconds%1000).padStart(3,'0'):''}`;
 }
 export async function downloadSet(id:string,name:string) {
   const response=await fetch(`/api/sets/${id}/export`);
