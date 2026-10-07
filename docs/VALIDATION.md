@@ -27,6 +27,17 @@ Normal FUSE execution could not be tested in the execution environment because `
 
 Run commands from [CONTRIBUTING.md](../CONTRIBUTING.md). Use temporary collections and generated tones; do not upload personal collections or unredacted logs. See THIRD_PARTY_NOTICES.md for the upstream runtime's version-inventory limitation.
 
+## 0.4.9 source preparation
+
+Local source checks on 2026-10-07:
+
+- 51 Python tests passed in the Ubuntu 22.04/Python 3.10 packaging environment after rebuilding bundled FFmpeg with the audio splitting and joining filters.
+- Synthetic stereo audio checks verified exact retained samples when removing a middle, beginning, or ending section, unchanged originals, private result previews, fades, and limiter duration. Invalid removals were rejected.
+- Strict TypeScript compilation and both Vite production builds passed using the frozen frontend lockfile.
+- Browser checks with synthetic data verified the removal action, empty-result guidance, keyboard handle movement, result length, preview/save requests, and a narrow layout without horizontal overflow. No browser warnings or errors were recorded.
+
+A new v0.4.9 AppImage has not been built or exercised locally. The release workflow must still complete packaging, source/license collection, and AppDir checks; packaged desktop and Discord checks remain to be performed.
+
 ## Remaining manual compatibility checks
 
 - Normal FUSE-mounted AppImage launch through a desktop file manager.

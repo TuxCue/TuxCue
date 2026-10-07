@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.4.9
 
 - Add an audio editor action to remove a selected section and join the remaining audio, with a private result preview and the original recording preserved.
+- Enable audio splitting and joining in the AppImage’s bundled FFmpeg.
+- Correct millisecond duration displays that could appear one millisecond too short.
 
 ## 0.4.8
 
