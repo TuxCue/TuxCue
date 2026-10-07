@@ -274,7 +274,7 @@ class Library:
                 peaks.append(max(abs(n) for n in values) / 32768)
         return peaks
 
-    def render_selection(self, sound_id, destination, *, start, end, gain_db=0.0, fade_in=0.0, fade_out=0.0):
+    def render_selection(self, sound_id, destination, *, start, end, operation='keep', gain_db=0.0, fade_in=0.0, fade_out=0.0):
         path = self.path(sound_id)
         with wave.open(str(path)) as audio:
             rate, frames = audio.getframerate(), audio.getnframes()
@@ -284,12 +284,29 @@ class Library:
         if not 0 <= start < end <= frames / rate + 0.000001:
             raise ValueError('Selection must start before it ends and stay within the sound.')
         first, last = round(start * rate), min(frames, round(end * rate))
-        duration = (last - first) / rate
-        if duration < .01:
+        if operation not in ('keep', 'remove'):
+            raise ValueError('Choose whether to keep or remove the selected section.')
+        if (last - first) / rate < .01:
             raise ValueError('Select at least 0.01 seconds of audio.')
+        output_frames = last - first if operation == 'keep' else frames - (last - first)
+        duration = output_frames / rate
+        if duration < .01:
+            raise ValueError('Leave at least 0.01 seconds of audio in the new clip.')
         if not -24 <= gain_db <= 12 or min(fade_in, fade_out) < 0 or fade_in + fade_out > duration + .000001:
-            raise ValueError('Use gain between −24 and +12 dB; fades must fit inside the selection.')
-        filters = [f'atrim=start_sample={first}:end_sample={last}', 'asetpts=PTS-STARTPTS', f'volume={gain_db}dB']
+            raise ValueError('Use gain between −24 and +12 dB; fades must fit inside the new clip.')
+        if operation == 'keep':
+            graph = f'[0:a]atrim=start_sample={first}:end_sample={last},asetpts=PTS-STARTPTS,'
+        elif first == 0:
+            graph = f'[0:a]atrim=start_sample={last},asetpts=PTS-STARTPTS,'
+        elif last == frames:
+            graph = f'[0:a]atrim=end_sample={first},asetpts=PTS-STARTPTS,'
+        else:
+            # Reset both segments to zero before joining them without the gap.
+            graph = (f'[0:a]asplit=2[before][after];'
+                     f'[before]atrim=end_sample={first},asetpts=PTS-STARTPTS[head];'
+                     f'[after]atrim=start_sample={last},asetpts=PTS-STARTPTS[tail];'
+                     '[head][tail]concat=n=2:v=0:a=1,')
+        filters = [f'volume={gain_db}dB']
         if fade_in:
             filters.append(f'afade=t=in:d={fade_in}')
         if fade_out:
@@ -299,9 +316,10 @@ class Library:
         if gain_db > 0:
             delay = max(0, int(rate * .005) - 1)
             filters.extend([f'apad=pad_len={delay}', 'alimiter=limit=0.98:level=false:attack=5',
-                            f'atrim=start_sample={delay}:end_sample={delay + last - first}', 'asetpts=PTS-STARTPTS'])
+                            f'atrim=start_sample={delay}:end_sample={delay + output_frames}', 'asetpts=PTS-STARTPTS'])
         try:
-            subprocess.run(['ffmpeg', '-v', 'error', '-nostdin', '-y', '-i', str(path), '-af', ','.join(filters),
+            subprocess.run(['ffmpeg', '-v', 'error', '-nostdin', '-y', '-i', str(path),
+                            '-filter_complex', graph + ','.join(filters) + '[edited]', '-map', '[edited]',
                             '-c:a', 'pcm_s16le', str(destination)], capture_output=True, text=True, timeout=90, check=True)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             raise ValueError('Could not render this selection. Try a shorter clip.') from e

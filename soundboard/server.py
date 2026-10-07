@@ -49,6 +49,7 @@ class Name(StrictModel):
 class Selection(StrictModel):
     start: float = Field(ge=0)
     end: float = Field(gt=0)
+    operation: Literal['keep', 'remove'] = 'keep'
     gain_db: float = Field(default=0, ge=-24, le=12)
     fade_in: float = Field(default=0, ge=0)
     fade_out: float = Field(default=0, ge=0)

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add an audio editor action to remove a selected section and join the remaining audio, with a private result preview and the original recording preserved.
+
 ## 0.4.8
 
 - Add a quick remove button to soundboard tiles and a multi-select mode for removing several tile assignments at once.

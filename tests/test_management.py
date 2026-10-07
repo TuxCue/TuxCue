@@ -78,6 +78,65 @@ class ManagementTests(unittest.TestCase):
         self.assertEqual(len(peaks),40)
         self.assertTrue(all(.04<p<.05 for p in peaks))
 
+    def test_remove_section_joins_audio_and_preserves_original(self):
+        recording = io.BytesIO()
+        # Distinct stereo sections make a missing segment, gap, or channel swap visible.
+        with wave.open(recording, 'wb') as audio:
+            audio.setparams((2, 2, 48000, 0, 'NONE', 'not compressed'))
+            audio.writeframes(array('h', [1000, -2000] * 1440 + [0, 0] * 1920 +
+                                    [-3000, 4000] * 1440).tobytes())
+        sound = self.post('/import', files={'file': ('sections.wav', recording.getvalue())}).json()
+        original_path = self.library.path(sound['id'])
+        original_file = original_path.read_bytes()
+        with wave.open(str(original_path)) as audio:
+            width = audio.getnchannels() * audio.getsampwidth()
+            original = audio.readframes(audio.getnframes())
+        for start, end in ((.03, .07), (0, .07), (.03, .1)):
+            with self.subTest(start=start, end=end):
+                settings = {'start': start, 'end': end, 'operation': 'remove'}
+                result = self.post(f'/sounds/{sound["id"]}/trim', json={'name': 'Joined', **settings})
+                self.assertEqual(result.status_code, 200, result.text)
+                clip = result.json()
+                first, last = round(start * 48000), round(end * 48000)
+                expected = original[:first * width] + original[last * width:]
+                with wave.open(str(self.library.path(clip['id']))) as audio:
+                    self.assertEqual(audio.getnframes(), len(expected) // width)
+                    self.assertEqual(audio.readframes(audio.getnframes()), expected)
+                self.assertAlmostEqual(clip['duration'], .1 - (end - start))
+                self.assertEqual(clip['source_id'], sound['id'])
+                preview = self.post(f'/sounds/{sound["id"]}/preview-selection', json=settings)
+                self.assertTrue(preview.json()['started'], preview.text)
+                preview_path, _, mode = self.app.state.audio.played
+                self.assertEqual(mode, 'preview')
+                with wave.open(str(preview_path)) as audio:
+                    self.assertEqual(audio.readframes(audio.getnframes()), expected)
+        self.assertEqual(original_path.read_bytes(), original_file)
+
+    def test_remove_section_applies_fades_and_limiter_to_result(self):
+        clip = self.library.save_selection(self.id, 'Joined fades', start=.03, end=.07,
+                                          operation='remove', gain_db=12, fade_in=.025, fade_out=.025)
+        # Fades total more than the removed section; they must fit the retained audio.
+        with wave.open(str(self.library.path(clip['id']))) as audio:
+            self.assertEqual(audio.getnframes(), 2880)
+            samples = array('h', audio.readframes(audio.getnframes()))
+            self.assertLess(abs(samples[0]), 5)
+            self.assertLess(abs(samples[-1]), 10)
+            self.assertGreater(abs(samples[len(samples) // 2]), 5000)
+
+    def test_invalid_removals_do_not_create_or_preview_clips(self):
+        for settings in ({'start': 0, 'end': .1}, {'start': 0, 'end': .095},
+                         {'start': .01, 'end': .09, 'fade_in': .03}):
+            values = {'operation': 'remove', **settings}
+            with self.subTest(settings=settings):
+                result = self.post(f'/sounds/{self.id}/trim', json={'name': 'bad', **values})
+                self.assertEqual(result.status_code, 400, result.text)
+                result = self.post(f'/sounds/{self.id}/preview-selection', json=values)
+                self.assertEqual(result.status_code, 400, result.text)
+        self.assertEqual(self.post(f'/sounds/{self.id}/trim', json={
+            'name': 'bad', 'start': .02, 'end': .08, 'operation': 'unknown'}).status_code, 422)
+        self.assertEqual(len(self.library.list()), 1)
+        self.assertIsNone(self.app.state.audio.played)
+
     def test_selection_preview_is_local_and_stop_cancels_render(self):
         result=self.post(f'/sounds/{self.id}/preview-selection',json={'start':0,'end':.05})
         self.assertTrue(result.json()['started'])

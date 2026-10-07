@@ -12,7 +12,7 @@ cd ffmpeg-source
   --disable-muxers --enable-muxer=wav,mp3,null \
   --disable-demuxers --enable-demuxer=mp3,wav,flac,ogg,mov,aac,aiff,asf \
   --disable-protocols --enable-protocol=file,pipe \
-  --disable-filters --enable-filter=aresample,anull,atrim,asetpts,volume,afade,apad,alimiter,aformat,abuffer,abuffersink
+  --disable-filters --enable-filter=aresample,anull,atrim,asetpts,asplit,concat,volume,afade,apad,alimiter,aformat,abuffer,abuffersink
 make -j"${TUXCUE_BUILD_JOBS:-4}"
 make install
 cp ffbuild/config.mak /build/ffmpeg-config.mak
