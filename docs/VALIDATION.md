@@ -31,12 +31,16 @@ Run commands from [CONTRIBUTING.md](../CONTRIBUTING.md). Use temporary collectio
 
 Local source checks on 2026-10-07:
 
-- 51 Python tests passed in the Ubuntu 22.04/Python 3.10 packaging environment after rebuilding bundled FFmpeg with the audio splitting and joining filters.
+- 53 Python tests passed in the Ubuntu 22.04/Python 3.10 packaging environment, including precise audio removal and fixed-runtime/checksum regression checks.
 - Synthetic stereo audio checks verified exact retained samples when removing a middle, beginning, or ending section, unchanged originals, private result previews, fades, and limiter duration. Invalid removals were rejected.
 - Strict TypeScript compilation and both Vite production builds passed using the frozen frontend lockfile.
 - Browser checks with synthetic data verified the removal action, empty-result guidance, keyboard handle movement, result length, preview/save requests, and a narrow layout without horizontal overflow. No browser warnings or errors were recorded.
 
-A new v0.4.9 AppImage has not been built or exercised locally. The release workflow must still complete packaging, source/license collection, and AppDir checks; packaged desktop and Discord checks remain to be performed.
+- The full local AppImage build passed license/source collection and the no-audio AppDir check, producing the AppImage, both source archives, component inventory, and checksums outside the checkout.
+- Upstream runtime release `20251108` was verified against its SHA-256 and upstream GPG signature (key fingerprint `570C77ACEA40C0F1B758902CBF96CCA56490F695`). Its source archive matches the embedded runtime commit `dd6cebe`.
+- The final v0.4.9 AppImage passed its extract-and-run component self-check without starting the application or accessing a personal collection.
+
+Packaged desktop/Discord use and normal FUSE mounting remain unverified for v0.4.9.
 
 ## Remaining manual compatibility checks
 
