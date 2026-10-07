@@ -4,6 +4,7 @@
 
 - Add an audio editor action to remove a selected section and join the remaining audio, with a private result preview and the original recording preserved.
 - Enable audio splitting and joining in the AppImage’s bundled FFmpeg.
+- Pin the AppImage runtime to a fixed upstream release and matching source archive so rolling upstream updates do not break checksum verification.
 - Correct millisecond duration displays that could appear one millisecond too short.
 
 ## 0.4.8

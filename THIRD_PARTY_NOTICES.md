@@ -24,7 +24,7 @@ Upstream: https://ffmpeg.org/legal.html
 
 ## AppImage runtime
 
-The runtime is pinned by source commit and binary SHA-256 in `packaging/inputs.json`. Its MIT license and notices for statically included musl, libfuse, squashfuse, zstd, zlib, and mimalloc are preserved in `licenses/appimage-runtime/`. The separate source bundle includes runtime source, its libfuse patch, and the pinned libfuse and squashfuse source archives. The upstream prebuilt runtime does not provide an exact version inventory for its Alpine permissive libraries; `runtime-notices.json` records checksum-pinned upstream notice sources, not a claim about those binary versions.
+The runtime uses upstream release `20251108`, pinned by source commit and binary SHA-256 in `packaging/inputs.json`. The download uses that fixed release rather than the rolling `continuous` release. Its MIT license and notices for statically included musl, libfuse, squashfuse, zstd, zlib, and mimalloc are preserved in `licenses/appimage-runtime/`. The separate source bundle includes runtime source, its libfuse patch, and the pinned libfuse and squashfuse source archives. The upstream prebuilt runtime does not provide an exact version inventory for its Alpine permissive libraries; `runtime-notices.json` records checksum-pinned upstream notice sources, not a claim about those binary versions.
 
 ## Source and redistribution
 

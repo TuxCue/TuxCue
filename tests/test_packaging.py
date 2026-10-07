@@ -2,6 +2,7 @@
 import hashlib
 import io
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -18,6 +19,22 @@ download_spec.loader.exec_module(fetch_inputs)
 
 
 class PackagingTests(unittest.TestCase):
+    def test_runtime_uses_a_fixed_release_and_matching_source(self):
+        inputs = json.loads((Path(__file__).resolve().parents[1]/'packaging/inputs.json').read_text())
+        runtime, source = inputs['runtime'], inputs['runtime-source']
+        release = runtime['url'].split('/releases/download/')[1].split('/')[0]
+        self.assertNotIn(release, ('continuous', 'latest'))
+        self.assertRegex(runtime['version'], r'^[0-9a-f]{40}$')
+        self.assertEqual(runtime['version'], source['version'])
+        self.assertTrue(source['url'].endswith('/' + runtime['version']))
+
+    def test_pinned_download_rejects_changed_bytes(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch.object(fetch_inputs.urllib.request, 'urlopen', return_value=io.BytesIO(b'changed input')):
+            with self.assertRaisesRegex(RuntimeError, 'Checksum mismatch'):
+                fetch_inputs.download('https://example.invalid/input', Path(directory)/'input',
+                                      hashlib.sha256(b'expected input').hexdigest())
+
     def test_pinned_download_retries_a_transient_server_error(self):
         content = b'checksum-pinned input'
         error = urllib.error.HTTPError('https://example.invalid/input', 500, 'temporary', {}, None)
