@@ -4,7 +4,7 @@ Bug reports, documentation improvements, and focused fixes are welcome. Open an 
 
 ## Development
 
-The frontend uses React/TypeScript/Vite; Python provides the local service, audio routing, and tray. Use the pinned dependency files. The supported application launch method is the AppImage; build it with `./scripts/build_appimage.sh` as described in [APPIMAGE.md](docs/APPIMAGE.md). That command runs the Python suite in the packaging container and builds both browser interfaces in a temporary directory.
+The frontend uses React/TypeScript/Vite; Python provides the local service, audio routing, and tray. Use the pinned dependency files. The supported application launch method is the AppImage; build it with `./scripts/build_appimage.sh` as described in [APPIMAGE.md](docs/APPIMAGE.md). That command runs the Python suite in the packaging container, checks the frontend edit-plan logic with Node’s built-in test runner, and builds both browser interfaces in a temporary directory.
 
 For a faster source-only test cycle, install the distribution's Python 3.10+, venv, PyGObject/GStreamer, Xlib, FFmpeg, and PulseAudio utilities. On Debian, the native packages are `python3-venv python3-gi python3-cairo python3-xlib gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-pulseaudio ffmpeg pulseaudio-utils`. Keep the test environment outside the checkout:
 

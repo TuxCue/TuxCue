@@ -46,7 +46,22 @@ class Name(StrictModel):
     name: str = Field(min_length=1, max_length=120)
 
 
-class Selection(StrictModel):
+class AudioSegment(StrictModel):
+    start_frame: int = Field(ge=0, strict=True)
+    end_frame: int = Field(gt=0, strict=True)
+
+
+class EditPlan(StrictModel):
+    segments: list[AudioSegment] | None = Field(default=None, min_length=1, max_length=128)
+
+
+class EditingWaveform(EditPlan):
+    count: int = Field(default=600, ge=16, le=2048)
+    start: float = Field(default=0, ge=0)
+    end: float | None = Field(default=None, ge=0)
+
+
+class Selection(EditPlan):
     start: float = Field(ge=0)
     end: float = Field(gt=0)
     operation: Literal['keep', 'remove'] = 'keep'
@@ -374,6 +389,10 @@ def create_app(project: Path, state_dir: Path | None = None, audio_factory=Audio
             result=library.trash(sound_id,restore=True)
             request.app.state.sync_hotkeys()
             return result
+
+    @app.post('/api/sounds/{sound_id}/editing-waveform')
+    def editing_waveform(sound_id: str, body: EditingWaveform):
+        return library.editing_waveform(sound_id, **body.model_dump())
 
     @app.post('/api/sounds/{sound_id}/trim')
     def save_clip(sound_id: str,body: SaveSelection):

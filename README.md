@@ -29,7 +29,7 @@ I started TuxCue because I could not find a Linux soundboard app that worked wel
 - Configurable sound tiles, rows, columns, colors, labels, and clip volumes.
 - Global keyboard shortcuts on X11, with conflict reporting.
 - Saved sound sets, import/export, and a shared library with original filenames.
-- Keep a selected section or cut it out and join the remaining audio. Preview the result privately, adjust gain, add fades, and save a new clip while keeping the original.
+- Keep a selected section or use Remove part to cut sections from the working waveform. Make several cuts, undo or reset them, and join the remaining audio before saving. Preview the result privately, adjust gain, add fades, and save a new clip while keeping the original.
 - Separate microphone, listening-device, and broadcast controls.
 - System-tray controls to open, stop, restart, or quit.
 - Optional paired-phone control with separate portrait and landscape layouts.

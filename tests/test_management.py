@@ -123,6 +123,64 @@ class ManagementTests(unittest.TestCase):
             self.assertLess(abs(samples[-1]), 10)
             self.assertGreater(abs(samples[len(samples) // 2]), 5000)
 
+    def test_working_cuts_update_waveform_and_preview_without_saving(self):
+        recording = io.BytesIO()
+        with wave.open(recording, 'wb') as audio:
+            audio.setparams((2, 2, 48000, 0, 'NONE', 'not compressed'))
+            audio.writeframes(array('h', [1000, -2000] * 960 + [0, 0] * 960 +
+                                    [-3000, 4000] * 960 + [0, 0] * 960 + [5000, -6000] * 960).tobytes())
+        sound = self.post('/import', files={'file': ('working.wav', recording.getvalue())}).json()
+        path = self.library.path(sound['id'])
+        before = path.read_bytes()
+        with wave.open(str(path)) as audio:
+            original = audio.readframes(audio.getnframes())
+        segment = lambda first, last: {'start_frame': first, 'end_frame': last}
+        plans = ([segment(0, 960), segment(1920, 4800)],
+                 [segment(0, 960), segment(1920, 2880), segment(3840, 4800)])
+        tiles = deepcopy(self.boards.active()['tiles'])
+        for plan in plans:
+            expected = b''.join(original[s['start_frame'] * 4:s['end_frame'] * 4] for s in plan)
+            result = self.post(f'/sounds/{sound["id"]}/editing-waveform', json={'segments': plan, 'count': 16})
+            self.assertEqual(result.status_code, 200, result.text)
+            metadata = result.json()
+            self.assertEqual(metadata['frames'], len(expected) // 4)
+            self.assertEqual(metadata['sample_rate'], 48000)
+            values = {'segments': plan, 'start': 0, 'end': metadata['duration']}
+            preview = self.post(f'/sounds/{sound["id"]}/preview-selection', json=values)
+            self.assertTrue(preview.json()['started'], preview.text)
+            preview_path, _, mode = self.app.state.audio.played
+            self.assertEqual(mode, 'preview')
+            with wave.open(str(preview_path)) as audio:
+                self.assertEqual(audio.readframes(audio.getnframes()), expected)
+            self.assertEqual(len(self.library.list()), 2, 'Working cuts must not add library sounds')
+            self.assertEqual(self.boards.active()['tiles'], tiles)
+        self.assertTrue(all(p > 0 for p in metadata['peaks']), 'Both silent sections were removed')
+        saved = self.post(f'/sounds/{sound["id"]}/trim', json={'name': 'Final edit', **values})
+        self.assertEqual(saved.status_code, 200, saved.text)
+        with wave.open(str(self.library.path(saved.json()['id']))) as audio:
+            self.assertEqual(audio.readframes(audio.getnframes()), expected)
+        self.assertEqual(len(self.library.list()), 3)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(list(self.library.directory.glob('tmp*')), [], 'Working files must be cleaned up')
+
+    def test_invalid_working_plans_are_rejected_and_cleaned_up(self):
+        for segments in ([], [{'start_frame': 0, 'end_frame': 999999}],
+                         [{'start_frame': 0, 'end_frame': 1}],
+                         [{'start_frame': 0, 'end_frame': 2400}, {'start_frame': 2000, 'end_frame': 4800}],
+                         [{'start_frame': -1, 'end_frame': 2400}],
+                         [{'start_frame': .5, 'end_frame': 2400}],
+                         [{'start_frame': 0, 'end_frame': 4800}] * 129):
+            with self.subTest(segments=segments):
+                for route, body in (('editing-waveform', {'segments': segments}),
+                                    ('preview-selection', {'segments': segments, 'start': 0, 'end': .05})):
+                    result = self.post(f'/sounds/{self.id}/{route}', json=body)
+                    self.assertIn(result.status_code, (400, 422), result.text)
+        result = self.post(f'/sounds/{self.id}/preview-selection', json={
+            'segments': [{'start_frame': 0, 'end_frame': 2400}], 'start': 0, 'end': .05, 'fade_in': .1})
+        self.assertEqual(result.status_code, 400, result.text)
+        self.assertEqual(list(self.library.directory.glob('tmp*')), [])
+        self.assertEqual(len(self.library.list()), 1)
+
     def test_invalid_removals_do_not_create_or_preview_clips(self):
         for settings in ({'start': 0, 'end': .1}, {'start': 0, 'end': .095},
                          {'start': .01, 'end': .09, 'fade_in': .03}):

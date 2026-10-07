@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Apply repeated cuts to the working waveform without saving intermediate clips, with Undo cut, Reset cuts, and private previews before the final save.
+
 ## 0.4.9
 
 - Add an audio editor action to remove a selected section and join the remaining audio, with a private result preview and the original recording preserved.

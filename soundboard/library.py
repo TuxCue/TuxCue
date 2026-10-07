@@ -14,6 +14,7 @@ import threading
 import uuid
 import wave
 from array import array
+from contextlib import contextmanager
 
 EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".aiff", ".wma"}
 FORMATS = "mp3,wav,flac,ogg,mov,aac,aiff,asf"
@@ -253,11 +254,53 @@ class Library:
         except subprocess.TimeoutExpired as e:
             raise ValueError("Audio conversion took too long. Try a shorter clip.") from e
 
+    @contextmanager
+    def edited_audio(self, sound_id, segments=None):
+        path = self.path(sound_id)
+        if segments is None:
+            yield path
+            return
+        with wave.open(str(path)) as source:
+            frames = source.getnframes()
+            previous = 0
+            if not 1 <= len(segments) <= 128:
+                raise ValueError('Use between 1 and 128 audio sections.')
+            for segment in segments:
+                first, last = segment['start_frame'], segment['end_frame']
+                if not isinstance(first, int) or not isinstance(last, int) or not previous <= first < last <= frames:
+                    raise ValueError('Audio sections must be ordered, non-overlapping, and within the original sound.')
+                previous = last
+            if sum(s['end_frame'] - s['start_frame'] for s in segments) < source.getframerate() * .01:
+                raise ValueError('Leave at least 0.01 seconds of audio in the new clip.')
+            # Build only a temporary PCM working copy. Nothing enters the library until Save.
+            with tempfile.TemporaryDirectory(dir=self.directory) as temp:
+                output = Path(temp) / 'working.wav'
+                with wave.open(str(output), 'wb') as target:
+                    target.setparams(source.getparams())
+                    for segment in segments:
+                        source.setpos(segment['start_frame'])
+                        remaining = segment['end_frame'] - segment['start_frame']
+                        while remaining:
+                            count = min(remaining, 48000)
+                            target.writeframesraw(source.readframes(count))
+                            remaining -= count
+                yield output
+
+    def editing_waveform(self, sound_id, *, segments=None, count=600, start=0.0, end=None):
+        with self.edited_audio(sound_id, segments) as path:
+            with wave.open(str(path)) as audio:
+                rate, frames = audio.getframerate(), audio.getnframes()
+            return {'peaks': self._waveform(path, count, start, end),
+                    'sample_rate': rate, 'frames': frames, 'duration': frames / rate}
+
     def waveform(self, sound_id: str, count=96, start=0.0, end=None):
+        return self._waveform(self.path(sound_id), count, start, end)
+
+    def _waveform(self, path, count, start, end):
         if not math.isfinite(start) or (end is not None and not math.isfinite(end)):
             raise ValueError('Enter finite waveform positions.')
         peaks = []
-        with wave.open(str(self.path(sound_id))) as audio:
+        with wave.open(str(path)) as audio:
             rate = audio.getframerate()
             total = audio.getnframes()
             first = max(0, min(total, round(start * rate)))
@@ -274,8 +317,11 @@ class Library:
                 peaks.append(max(abs(n) for n in values) / 32768)
         return peaks
 
-    def render_selection(self, sound_id, destination, *, start, end, operation='keep', gain_db=0.0, fade_in=0.0, fade_out=0.0):
-        path = self.path(sound_id)
+    def render_selection(self, sound_id, destination, *, segments=None, **settings):
+        with self.edited_audio(sound_id, segments) as path:
+            return self._render_selection(path, destination, **settings)
+
+    def _render_selection(self, path, destination, *, start, end, operation='keep', gain_db=0.0, fade_in=0.0, fade_out=0.0):
         with wave.open(str(path)) as audio:
             rate, frames = audio.getframerate(), audio.getnframes()
         values = (start, end, gain_db, fade_in, fade_out)

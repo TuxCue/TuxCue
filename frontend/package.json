@@ -4,7 +4,7 @@
   "version": "0.4.9",
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && vite build"
+    "build": "node --experimental-strip-types tests/audioEdits.test.mjs && tsc --noEmit && vite build"
   },
   "dependencies": {
     "react": "^19.1.0",
