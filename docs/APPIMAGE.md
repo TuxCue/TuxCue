@@ -43,7 +43,7 @@ Install Docker, Python 3, Node.js 22.13+, and pnpm 11.19.0. From the project roo
 ./scripts/build_appimage.sh
 ```
 
-The script makes a temporary snapshot of the selected source and rebuilds the frontend from its frozen lockfile, collects its notices, checks public source selection, and builds in an Ubuntu container. FFmpeg is compiled from the verified 8.1.2 source with audio-focused configuration. No system-wide audio configuration is changed by building.
+The script makes a temporary snapshot of the selected source and rebuilds the frontend from its frozen lockfile, collects its notices, checks public source selection, and builds in an Ubuntu container. FFmpeg is compiled from the verified 8.1.3 source with audio-focused configuration. No system-wide audio configuration is changed by building.
 
 Docker runs the Python tests, freezes the application with PyInstaller, checks its components, collects licenses and exact third-party sources, and rejects audio/collection files in the AppDir. The output includes the AppImage, checksums, component inventory, and both source archives. Network access and several GB of free space are required, especially for corresponding sources.
 

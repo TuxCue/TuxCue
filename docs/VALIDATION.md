@@ -42,6 +42,16 @@ Local source checks on 2026-10-07:
 
 Packaged desktop/Discord use and normal FUSE mounting remain unverified for v0.4.9.
 
+## Unreleased security refresh
+
+Local packaging checks on 2026-11-19:
+
+- Exact Python and frontend lock inventories returned no known vulnerabilities from OSV; `pnpm audit` also passed.
+- Frozen frontend installation, edit-plan tests, strict TypeScript compilation, and both Vite production builds passed.
+- The Ubuntu 22.04/Python 3.10 packaging environment passed `python -m pip check` and all 55 Python tests.
+- The frozen application self-check and AppDir checks passed with FFmpeg 8.1.3, working audio/tray/QR components, required notices and corresponding sources, and no audio or collection data.
+- The final AppImage packaging step remains to be verified on x86_64: the x86_64 `appimagetool` could not execute in the arm64 Podman VM used for these checks.
+
 ## Remaining manual compatibility checks
 
 - Normal FUSE-mounted AppImage launch through a desktop file manager.

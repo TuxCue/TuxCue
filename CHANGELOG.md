@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Apply repeated cuts to the working waveform without saving intermediate clips, with Undo cut, Reset cuts, and private previews before the final save.
+- Update vulnerable Python and frontend dependencies, refresh the Ubuntu packaging snapshot, and build with verified FFmpeg 8.1.3 source.
 
 ## 0.4.9
 

@@ -18,7 +18,7 @@ Python uses the PSF license and included third-party terms. PyGObject, python-xl
 
 ## FFmpeg
 
-The release recipe builds FFmpeg 8.1.2 from the upstream signed source archive, with no network protocols or external video-codec libraries. It includes LAME for MP3 encoding used by synthetic tests. This configuration does not enable GPL or nonfree FFmpeg options; the applicable FFmpeg and LAME notices remain in the package. Software licenses do not establish that every codec is patent-free in every jurisdiction.
+The release recipe builds FFmpeg 8.1.3 from the upstream signed source archive, with no network protocols or external video-codec libraries. It includes LAME for MP3 encoding used by synthetic tests. This configuration does not enable GPL or nonfree FFmpeg options; the applicable FFmpeg and LAME notices remain in the package. Software licenses do not establish that every codec is patent-free in every jurisdiction.
 
 Upstream: https://ffmpeg.org/legal.html
 

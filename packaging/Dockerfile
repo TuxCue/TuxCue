@@ -1,6 +1,6 @@
-FROM ubuntu:22.04@sha256:829f6df217bcbae2b371026e81711d1a787c61b2967ad09d015063663ebafbf7
+FROM ubuntu:22.04@sha256:45e9ddc6895604674618a409ca9f73d301da8fdb75fe330e8e9a27b3b219e4ad
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1
-ARG UBUNTU_SNAPSHOT=20260904T000000Z
+ARG UBUNTU_SNAPSHOT=20261119T000000Z
 ENV TUXCUE_UBUNTU_SNAPSHOT=$UBUNTU_SNAPSHOT
 # Point APT directly at the immutable snapshot. The snapshot= source option
 # still leaves apt-get source free to request files from the moving archive.
